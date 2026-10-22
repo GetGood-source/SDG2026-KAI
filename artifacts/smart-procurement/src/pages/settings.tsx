@@ -25,7 +25,7 @@ export default function SettingsPage() {
   };
   return (
     <div>
-      <PageHeader eyebrow="Workspace" title="Settings" sub="Shared by everyone using this workspace." />
+      <PageHeader eyebrow="Workspace" title="Settings" sub="Managers only. Changes apply to everyone on the team." />
       <div className="grid gap-5 lg:grid-cols-[1fr_320px]">
         <Panel title="Company">
           <form onSubmit={save} className="space-y-4 p-4">

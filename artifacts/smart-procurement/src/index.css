@@ -1,5 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@layer theme, base, clerk, components, utilities;
 @import 'tailwindcss';
+@import '@clerk/themes/shadcn.css';
 @import 'tw-animate-css';
 @plugin "@tailwindcss/typography";
 
@@ -437,3 +439,10 @@
 .rise { animation: rise .35s cubic-bezier(.2,.7,.2,1) both; }
 .grid-bg { background-image: linear-gradient(hsl(214 40% 92%) 1px, transparent 1px), linear-gradient(90deg, hsl(214 40% 92%) 1px, transparent 1px); background-size: 24px 24px; }
 .num { font-family: var(--app-font-mono); font-variant-numeric: tabular-nums; }
+
+.cl-formFieldInput::placeholder { color: hsl(218 15% 60%); opacity: 1; }
+.cl-formButtonPrimary:hover { background-color: hsl(217 91% 38%); }
+.cl-socialButtonsBlockButton:hover { background-color: hsl(214 60% 96%); }
+.cl-footerActionLink:hover { color: hsl(217 91% 35%); }
+@keyframes drift { from { transform: translateX(0);} to { transform: translateX(-50%);} }
+.drift { animation: drift 40s linear infinite; }

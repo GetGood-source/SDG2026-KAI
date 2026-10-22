@@ -7,10 +7,47 @@
 import * as zod from 'zod';
 
 
+export const GetCurrentAccountResponse = zod.object({
+  "userId": zod.string(),
+  "name": zod.string(),
+  "email": zod.string(),
+  "role": zod.union([zod.literal('staff'),zod.literal('manager'),zod.literal(null)]).nullable(),
+  "status": zod.enum(['active', 'pending', 'revoked', 'unverified'])
+})
+
+
+export const ListTeamResponseItem = zod.object({
+  "email": zod.string().email(),
+  "role": zod.enum(['staff', 'manager']),
+  "status": zod.enum(['active', 'revoked'])
+}).and(zod.object({
+  "id": zod.number().int(),
+  "userId": zod.string().nullable(),
+  "joinedAt": zod.string()
+}))
+export const ListTeamResponse = zod.array(ListTeamResponseItem)
+
+
+export const SaveTeamMemberBody = zod.object({
+  "email": zod.string().email(),
+  "role": zod.enum(['staff', 'manager']),
+  "status": zod.enum(['active', 'revoked'])
+})
+
+export const SaveTeamMemberResponse = zod.object({
+  "email": zod.string().email(),
+  "role": zod.enum(['staff', 'manager']),
+  "status": zod.enum(['active', 'revoked'])
+}).and(zod.object({
+  "id": zod.number().int(),
+  "userId": zod.string().nullable(),
+  "joinedAt": zod.string()
+}))
+
+
 export const HealthCheckResponse = zod.object({
   "status": zod.string()
 })
-
 
 
 
@@ -47,9 +84,10 @@ export const GetWorkspaceResponse = zod.object({
   "neededBy": zod.string(),
   "description": zod.string().min(1),
   "quantity": zod.number().int().min(1),
-  "requestedBy": zod.string().min(1),
   "priority": zod.enum(['normal', 'urgent', 'critical'])
 }).and(zod.object({
+  "requestedBy": zod.string(),
+  "requestedById": zod.string().optional(),
   "id": zod.number().int(),
   "reference": zod.string(),
   "status": zod.enum(['new', 'sourcing', 'awaiting_approval', 'approved', 'ordered', 'delivered', 'rejected']),
@@ -131,17 +169,14 @@ export const GetWorkspaceResponse = zod.object({
 
 
 
-
 export const CreateRequestBody = zod.object({
   "partName": zod.string().min(1),
   "model": zod.string().min(1),
   "neededBy": zod.string(),
   "description": zod.string().min(1),
   "quantity": zod.number().int().min(1),
-  "requestedBy": zod.string().min(1),
   "priority": zod.enum(['normal', 'urgent', 'critical'])
 })
-
 
 
 
@@ -161,9 +196,10 @@ export const CreateRequestResponse = zod.object({
   "neededBy": zod.string(),
   "description": zod.string().min(1),
   "quantity": zod.number().int().min(1),
-  "requestedBy": zod.string().min(1),
   "priority": zod.enum(['normal', 'urgent', 'critical'])
 }).and(zod.object({
+  "requestedBy": zod.string(),
+  "requestedById": zod.string().optional(),
   "id": zod.number().int(),
   "reference": zod.string(),
   "status": zod.enum(['new', 'sourcing', 'awaiting_approval', 'approved', 'ordered', 'delivered', 'rejected']),
@@ -207,7 +243,6 @@ export const RequestActionBody = zod.object({
 
 
 
-
 export const requestActionResponseTwoQuotesItemOnePriceMin = 0.01;
 
 export const requestActionResponseTwoQuotesItemOneShippingMin = 0;
@@ -222,9 +257,10 @@ export const RequestActionResponse = zod.object({
   "neededBy": zod.string(),
   "description": zod.string().min(1),
   "quantity": zod.number().int().min(1),
-  "requestedBy": zod.string().min(1),
   "priority": zod.enum(['normal', 'urgent', 'critical'])
 }).and(zod.object({
+  "requestedBy": zod.string(),
+  "requestedById": zod.string().optional(),
   "id": zod.number().int(),
   "reference": zod.string(),
   "status": zod.enum(['new', 'sourcing', 'awaiting_approval', 'approved', 'ordered', 'delivered', 'rejected']),
@@ -279,7 +315,6 @@ export const AddQuoteBody = zod.object({
 
 
 
-
 export const addQuoteResponseTwoQuotesItemOnePriceMin = 0.01;
 
 export const addQuoteResponseTwoQuotesItemOneShippingMin = 0;
@@ -294,9 +329,10 @@ export const AddQuoteResponse = zod.object({
   "neededBy": zod.string(),
   "description": zod.string().min(1),
   "quantity": zod.number().int().min(1),
-  "requestedBy": zod.string().min(1),
   "priority": zod.enum(['normal', 'urgent', 'critical'])
 }).and(zod.object({
+  "requestedBy": zod.string(),
+  "requestedById": zod.string().optional(),
   "id": zod.number().int(),
   "reference": zod.string(),
   "status": zod.enum(['new', 'sourcing', 'awaiting_approval', 'approved', 'ordered', 'delivered', 'rejected']),

@@ -9,8 +9,10 @@ import {
 import { openai } from "@workspace/integrations-openai-ai-server";
 import { audit, refreshSummary, withWorkspace, ProcurementError } from "../lib/procurement-store";
 import { explainRecommendation, rankQuotes } from "../lib/procurement-seed";
+import { identifyAccount, requireMember, requireManager, requireSameOrigin } from "../middlewares/workspace-auth";
 
 const router: IRouter = Router();
+router.use("/procurement", identifyAccount, requireMember, requireSameOrigin);
 const nextId = (items: { id: number }[]) => Math.max(0, ...items.map(i => i.id)) + 1;
 const normalize = (s: string) => s.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
 const editable = (r: PartRequest) => {
@@ -19,6 +21,7 @@ const editable = (r: PartRequest) => {
 
 router.get("/procurement/workspace", async (_req, res): Promise<void> => {
   const state = await withWorkspace(s => {
+    s.integrationNote = "Verified staff and manager accounts protect this workspace. Managers control purchase approvals and team access. Sample suppliers, quotes and historical demo activity are not live evidence. Google search opens externally; record verified quotes manually. Follow-ups are drafts, not sent emails. Purchase orders are tracked internally, not submitted to suppliers.";
     refreshSummary(s);
     return s;
   });
@@ -35,7 +38,8 @@ router.post("/procurement/requests", async (req, res): Promise<void> => {
   const created = await withWorkspace(s => {
     const id = nextId(s.requests);
     const r: PartRequest = {
-      ...input, id, reference: `PR-${1040 + id}`, status: "new",
+      ...input, requestedBy: res.locals.account.name, requestedById: res.locals.account.userId,
+      id, reference: `PR-${1040 + id}`, status: "new",
       createdAt: new Date().toISOString(), quotes: [], selectedQuoteId: null,
       orderReference: null, recommendation: "Run sourcing to check inventory and available supplier quotations.",
       recommendationMode: "rules",
@@ -43,7 +47,7 @@ router.post("/procurement/requests", async (req, res): Promise<void> => {
       searchUrl: `https://www.google.com/search?q=${encodeURIComponent(`${input.partName} ${input.model} supplier ${s.settings.currency === "MYR" ? "Malaysia" : ""}`)}`,
     };
     s.requests.unshift(r);
-    audit(s, "Request created", `${r.reference}: ${r.partName}, ${r.model}; ${r.quantity} unit(s), required ${r.neededBy}. ${r.description}`, id, input.requestedBy);
+    audit(s, "Request created", `${r.reference}: ${r.partName}, ${r.model}; ${r.quantity} unit(s), required ${r.neededBy}. ${r.description}`, id);
     return r;
   });
   res.status(201).json(CreateRequestResponse.parse(created));
@@ -79,6 +83,9 @@ router.post("/procurement/requests/:id/action", async (req, res): Promise<void> 
   const parsed = RequestActionBody.safeParse(req.body);
   if (!params.success || !parsed.success) { res.status(400).json({ error: "Invalid action or request ID." }); return; }
   const { action, quoteId, note } = parsed.data;
+  if (["approve", "reject"].includes(action) && res.locals.account.role !== "manager") {
+    res.status(403).json({ error: "Only a manager can approve or reject a purchase." }); return;
+  }
   const result = await withWorkspace(async s => {
     const r = s.requests.find(r => r.id === params.data.id);
     if (!r) throw new ProcurementError("Request not found.", 404);
@@ -129,12 +136,12 @@ router.post("/procurement/requests/:id/action", async (req, res): Promise<void> 
       if (!q) throw new ProcurementError("A valid available quote must be selected first.");
       if (!q.onTime && !note?.trim()) throw new ProcurementError("This quote misses the deadline. Add an approval note acknowledging the delay.");
       r.status = "approved";
-      audit(s, "Purchase approved", `${r.reference}: ${q.supplierName}, ${s.settings.currency} ${q.total.toFixed(2)}. ${note || "Approved for purchase."}`, r.id, "Human approver (shared workspace)");
+      audit(s, "Purchase approved", `${r.reference}: ${q.supplierName}, ${s.settings.currency} ${q.total.toFixed(2)}. ${note || "Approved for purchase."}`, r.id);
     } else if (action === "reject") {
       if (r.status !== "awaiting_approval") throw new ProcurementError("Only requests awaiting approval can be rejected.");
       if (!note?.trim()) throw new ProcurementError("Please provide a reason for rejection.");
       r.status = "rejected";
-      audit(s, "Purchase rejected", `${r.reference}: ${note}`, r.id, "Human approver (shared workspace)");
+      audit(s, "Purchase rejected", `${r.reference}: ${note}`, r.id);
     } else if (action === "order") {
       if (r.status !== "approved") throw new ProcurementError("Human approval is required before a purchase order can be recorded.");
       const q = r.quotes.find(q => q.id === r.selectedQuoteId && q.available);
@@ -191,7 +198,7 @@ router.post("/procurement/inventory", async (req, res): Promise<void> => {
   res.status(201).json(SaveInventoryResponse.parse(result));
 });
 
-router.put("/procurement/settings", async (req, res): Promise<void> => {
+router.put("/procurement/settings", requireManager, async (req, res): Promise<void> => {
   const parsed = SaveSettingsBody.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
   const result = await withWorkspace(s => {

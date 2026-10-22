@@ -46,7 +46,7 @@ export function seedState(): ProcurementState {
     requests: [], activity: [],
     summary: { activeRequests: 0, pendingApprovals: 0, inTransit: 0, totalSpend: 0, lowStock: 0, delivered: 0, savings: 0 },
     demoMode: true,
-    integrationNote: "Shared MVP workspace. Sample suppliers and quotations are labeled Demo. Google search opens externally; record verified quotes manually. Follow-ups are drafts, not sent emails. Purchase orders are tracked internally, not submitted to suppliers. Human names in the log are entered labels, not verified identities.",
+    integrationNote: "Verified staff and manager accounts protect this workspace. Managers control purchase approvals and team access. Sample suppliers, quotes and historical demo activity are not live evidence. Google search opens externally; record verified quotes manually. Follow-ups are drafts, not sent emails. Purchase orders are tracked internally, not submitted to suppliers.",
     catalog: [],
   };
   const samples = [

@@ -5,6 +5,39 @@ info:
 servers:
   - url: /api
 paths:
+  /auth/me:
+    get:
+      operationId: getCurrentAccount
+      responses:
+        "200":
+          description: Authenticated identity and workspace access
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Account" }
+  /team:
+    get:
+      operationId: listTeam
+      responses:
+        "200":
+          description: Manager-only team list
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/TeamMember" }
+    post:
+      operationId: saveTeamMember
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TeamMemberInput" }
+      responses:
+        "200":
+          description: Membership saved
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TeamMember" }
   /healthz:
     get:
       operationId: healthCheck
@@ -113,6 +146,31 @@ paths:
               schema: { $ref: "#/components/schemas/Settings" }
 components:
   schemas:
+    Account:
+      type: object
+      required: [userId, name, email, role, status]
+      properties:
+        userId: { type: string }
+        name: { type: string }
+        email: { type: string }
+        role: { type: [string, "null"], enum: [staff, manager, null] }
+        status: { type: string, enum: [active, pending, revoked, unverified] }
+    TeamMemberInput:
+      type: object
+      required: [email, role, status]
+      properties:
+        email: { type: string, format: email }
+        role: { type: string, enum: [staff, manager] }
+        status: { type: string, enum: [active, revoked] }
+    TeamMember:
+      allOf:
+        - $ref: "#/components/schemas/TeamMemberInput"
+        - type: object
+          required: [id, userId, joinedAt]
+          properties:
+            id: { type: integer }
+            userId: { type: [string, "null"] }
+            joinedAt: { type: string }
     HealthStatus:
       type: object
       required: [status]
@@ -120,21 +178,22 @@ components:
         status: { type: string }
     RequestInput:
       type: object
-      required: [partName, model, neededBy, description, quantity, requestedBy, priority]
+      required: [partName, model, neededBy, description, quantity, priority]
       properties:
         partName: { type: string, minLength: 1 }
         model: { type: string, minLength: 1 }
         neededBy: { type: string }
         description: { type: string, minLength: 1 }
         quantity: { type: integer, minimum: 1 }
-        requestedBy: { type: string, minLength: 1 }
         priority: { type: string, enum: [normal, urgent, critical] }
     PartRequest:
       allOf:
         - $ref: "#/components/schemas/RequestInput"
         - type: object
-          required: [id, reference, status, createdAt, quotes, recommendation, recommendationMode, selectedQuoteId, orderReference, searchUrl, inventoryAvailable]
+          required: [id, reference, requestedBy, status, createdAt, quotes, recommendation, recommendationMode, selectedQuoteId, orderReference, searchUrl, inventoryAvailable]
           properties:
+            requestedBy: { type: string }
+            requestedById: { type: string }
             id: { type: integer }
             reference: { type: string }
             status: { type: string, enum: [new, sourcing, awaiting_approval, approved, ordered, delivered, rejected] }

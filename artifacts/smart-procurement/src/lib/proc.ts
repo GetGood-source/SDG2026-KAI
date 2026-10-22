@@ -1,9 +1,11 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useGetWorkspace, getGetWorkspaceQueryKey } from "@workspace/api-client-react";
 import type { PartRequest } from "@workspace/api-client-react";
+import { useAccount } from "./account";
 
 export function useWorkspace() {
-  return useGetWorkspace({ query: { queryKey: getGetWorkspaceQueryKey(), refetchInterval: 20000 } });
+  const { account } = useAccount();
+  return useGetWorkspace({ query: { queryKey: [...getGetWorkspaceQueryKey(), account.userId], refetchInterval: 20000 } });
 }
 
 export function useInvalidateWorkspace() {

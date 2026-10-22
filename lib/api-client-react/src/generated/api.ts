@@ -24,6 +24,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  Account,
   ActionInput,
   HealthStatus,
   InventoryInput,
@@ -34,6 +35,8 @@ import type {
   Settings,
   Supplier,
   SupplierInput,
+  TeamMember,
+  TeamMemberInput,
   Workspace
 } from './api.schemas';
 
@@ -63,6 +66,278 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   }
   return result;
 };
+
+export const getGetCurrentAccountUrl = () => {
+
+
+
+
+  return `/api/auth/me`
+}
+
+export const getCurrentAccount = async ( options?: Parameters<typeof customFetch>[1]): Promise<Account> => {
+
+  return customFetch<Account>(getGetCurrentAccountUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetCurrentAccountQueryKey = () => {
+    return [
+    `/api/auth/me`
+    ] as const;
+    }
+
+
+export const getGetCurrentAccountQueryOptions = <TData = Awaited<ReturnType<typeof getCurrentAccount>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCurrentAccount>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCurrentAccountQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCurrentAccount>>> = ({ signal }) => getCurrentAccount({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCurrentAccount>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetCurrentAccountQueryResult = NonNullable<Awaited<ReturnType<typeof getCurrentAccount>>>
+export type GetCurrentAccountQueryError = ErrorType<unknown>
+
+
+export function useGetCurrentAccount<TData = Awaited<ReturnType<typeof getCurrentAccount>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCurrentAccount>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCurrentAccount>>,
+          TError,
+          Awaited<ReturnType<typeof getCurrentAccount>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetCurrentAccount<TData = Awaited<ReturnType<typeof getCurrentAccount>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCurrentAccount>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCurrentAccount>>,
+          TError,
+          Awaited<ReturnType<typeof getCurrentAccount>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetCurrentAccount<TData = Awaited<ReturnType<typeof getCurrentAccount>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCurrentAccount>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetCurrentAccount<TData = Awaited<ReturnType<typeof getCurrentAccount>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCurrentAccount>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetCurrentAccountQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getListTeamUrl = () => {
+
+
+
+
+  return `/api/team`
+}
+
+export const listTeam = async ( options?: Parameters<typeof customFetch>[1]): Promise<TeamMember[]> => {
+
+  return customFetch<TeamMember[]>(getListTeamUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListTeamQueryKey = () => {
+    return [
+    `/api/team`
+    ] as const;
+    }
+
+
+export const getListTeamQueryOptions = <TData = Awaited<ReturnType<typeof listTeam>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTeam>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListTeamQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listTeam>>> = ({ signal }) => listTeam({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listTeam>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListTeamQueryResult = NonNullable<Awaited<ReturnType<typeof listTeam>>>
+export type ListTeamQueryError = ErrorType<unknown>
+
+
+export function useListTeam<TData = Awaited<ReturnType<typeof listTeam>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTeam>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listTeam>>,
+          TError,
+          Awaited<ReturnType<typeof listTeam>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListTeam<TData = Awaited<ReturnType<typeof listTeam>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTeam>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listTeam>>,
+          TError,
+          Awaited<ReturnType<typeof listTeam>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListTeam<TData = Awaited<ReturnType<typeof listTeam>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTeam>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useListTeam<TData = Awaited<ReturnType<typeof listTeam>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTeam>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListTeamQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getSaveTeamMemberUrl = () => {
+
+
+
+
+  return `/api/team`
+}
+
+export const saveTeamMember = async (teamMemberInput: TeamMemberInput, options?: Parameters<typeof customFetch>[1]): Promise<TeamMember> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<TeamMember>(getSaveTeamMemberUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(teamMemberInput)
+  }
+);}
+
+
+
+
+
+export const getSaveTeamMemberMutationKey = () => ['saveTeamMember'] as const;
+
+export const getSaveTeamMemberMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof saveTeamMember>>, TError,SaveTeamMemberMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof saveTeamMember>>, TError,SaveTeamMemberMutationVariables, TContext> => {
+
+const mutationKey = getSaveTeamMemberMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof saveTeamMember>>, SaveTeamMemberMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  saveTeamMember(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SaveTeamMemberMutationResult = NonNullable<Awaited<ReturnType<typeof saveTeamMember>>>
+    export type SaveTeamMemberMutationBody = BodyType<TeamMemberInput>
+    export type SaveTeamMemberMutationError = ErrorType<unknown>
+    export type SaveTeamMemberMutationVariables = {data: BodyType<TeamMemberInput>}
+
+    export const useSaveTeamMember = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof saveTeamMember>>, TError,SaveTeamMemberMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof saveTeamMember>>,
+        TError,
+        SaveTeamMemberMutationVariables,
+        TContext
+      > => {
+      return useMutation(getSaveTeamMemberMutationOptions(options), queryClient);
+    }
 
 export const getHealthCheckUrl = () => {
 

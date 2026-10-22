@@ -16,7 +16,5 @@ export interface RequestInput {
   description: string;
   /** @minimum 1 */
   quantity: number;
-  /** @minLength 1 */
-  requestedBy: string;
   priority: RequestInputPriority;
 }

@@ -1,30 +1,37 @@
 import { useState, type ReactNode } from "react";
 import { Link, useLocation } from "wouter";
-import { LayoutGrid, FileText, Building2, Boxes, ShieldCheck, Truck, ScrollText, Settings2, Menu, X, Info } from "lucide-react";
+import { LogOut, Users, LayoutGrid, FileText, Building2, Boxes, ShieldCheck, Truck, ScrollText, Settings2, Menu, X, Info } from "lucide-react";
 import { useWorkspace } from "@/lib/proc";
 import { cn } from "@/lib/utils";
+import { useClerk } from "@clerk/react";
+import { useAccount } from "@/lib/account";
 
 const NAV = [
-  { href: "/", label: "Overview", icon: LayoutGrid },
+  { href: "/dashboard", label: "Overview", icon: LayoutGrid },
   { href: "/requests", label: "Requests", icon: FileText },
   { href: "/approvals", label: "Approvals", icon: ShieldCheck, badge: "approvals" },
   { href: "/orders", label: "Orders", icon: Truck },
   { href: "/suppliers", label: "Suppliers", icon: Building2 },
   { href: "/inventory", label: "Inventory", icon: Boxes, badge: "stock" },
   { href: "/activity", label: "Audit trail", icon: ScrollText },
-  { href: "/settings", label: "Settings", icon: Settings2 },
+  { href: "/team", label: "Team", icon: Users, manager: true },
+  { href: "/settings", label: "Settings", icon: Settings2, manager: true },
 ];
 
 export function Layout({ children }: { children: ReactNode }) {
   const [loc] = useLocation();
   const [open, setOpen] = useState(false);
   const { data } = useWorkspace();
+  const { account, isManager } = useAccount();
+  const { signOut } = useClerk();
+  const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+  const initials = (account.name || account.email).split(/[\s@.]+/).filter(Boolean).slice(0, 2).map((w) => w[0]!.toUpperCase()).join("");
   const counts: Record<string, number> = { approvals: data?.summary.pendingApprovals ?? 0, stock: data?.summary.lowStock ?? 0 };
 
   const nav = (
     <nav className="flex flex-col gap-0.5 px-3">
-      {NAV.map((n) => {
-        const active = n.href === "/" ? loc === "/" : loc.startsWith(n.href);
+      {NAV.filter((n) => !("manager" in n) || isManager).map((n) => {
+        const active = loc.startsWith(n.href);
         const c = n.badge ? counts[n.badge] : 0;
         return (
           <Link key={n.href} href={n.href} onClick={() => setOpen(false)} data-testid={`link-nav-${n.label.toLowerCase().replace(/\s/g, "-")}`}
@@ -55,7 +62,15 @@ export function Layout({ children }: { children: ReactNode }) {
   const foot = (
     <div className="mt-auto space-y-2 p-4 text-[11px] text-sidebar-foreground/60">
       {data?.demoMode && <div className="rounded border border-dashed border-amber-400/60 px-2 py-1.5 text-amber-200">Demo mode: some suppliers and quotes are sample data.</div>}
-      <div className="flex gap-1.5"><Info className="mt-0.5 h-3 w-3 shrink-0" />Shared workspace. No sign-in, no verified roles. No email or purchasing integrations connected.</div>
+      <div className="flex gap-1.5"><Info className="mt-0.5 h-3 w-3 shrink-0" />Signed-in team workspace. No email or purchasing integrations connected; orders are placed by you outside the system.</div>
+      <div className="flex items-center gap-2.5 rounded-md border border-sidebar-border bg-white/5 p-2.5">
+        <div className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-sidebar-primary/20 text-[11px] font-bold text-white ring-1 ring-sidebar-primary/50" data-testid="img-avatar">{initials}</div>
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-[12px] font-semibold text-white" data-testid="text-account-name">{account.name || account.email}</div>
+          <div className="flex items-center gap-1.5"><span className={cn("rounded px-1 text-[9px] font-bold uppercase tracking-wider", isManager ? "bg-sidebar-primary text-white" : "bg-white/10 text-sidebar-foreground")} data-testid="text-account-role">{account.role}</span><span className="truncate">{account.email}</span></div>
+        </div>
+        <button type="button" title="Sign out" onClick={() => signOut({ redirectUrl: base || "/" })} className="rounded p-1.5 text-sidebar-foreground/70 transition hover:bg-white/10 hover:text-white" data-testid="button-logout"><LogOut className="h-4 w-4" /></button>
+      </div>
     </div>
   );
 

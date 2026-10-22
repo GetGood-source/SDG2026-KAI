@@ -9,6 +9,8 @@ import type { Quote } from './quote';
 import type { RequestInput } from './requestInput';
 
 export type PartRequest = RequestInput & ({
+  requestedBy: string;
+  requestedById?: string;
   id: number;
   reference: string;
   status: PartRequestStatus;

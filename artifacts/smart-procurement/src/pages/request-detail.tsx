@@ -8,6 +8,7 @@ import { Panel, StatusPill, PriorityPill, DemoBadge, LoadingRows, ErrorState, Bt
 import { QuoteDialog, SupplierDialog } from "@/components/dialogs";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { useAccount } from "@/lib/account";
 
 const STEPS = ["Request", "Connected data", "Decision", "Approval", "Outcome"];
 
@@ -29,6 +30,7 @@ export default function RequestDetail() {
   const params = useParams<{ id: string }>();
   const id = Number(params.id);
   const { data, isLoading, isError, refetch } = useWorkspace();
+  const { isManager } = useAccount();
   const act = useRequestAction();
   const inv = useInvalidateWorkspace();
   const { toast } = useToast();
@@ -178,14 +180,16 @@ export default function RequestDetail() {
             </div>
           </Step>
 
-          <Step n={4} title="Approval: human sign-off" state={stepState(4)}>
-            {r.status === "awaiting_approval" && sq ? (
+          <Step n={4} title="Approval: manager sign-off" state={stepState(4)}>
+            {r.status === "awaiting_approval" && sq && !isManager ? (
+              <div className="flex items-start gap-2 rounded-md border border-dashed border-primary/40 bg-secondary/60 p-3 text-sm text-secondary-foreground" data-testid="text-manager-required"><Lock className="mt-0.5 h-4 w-4 shrink-0" /><div><div className="font-semibold">Waiting for a manager</div>{sq.supplierName} at {money(sq.total * r.quantity, cur)} is queued for sign-off. Only managers can approve or reject; you will see the outcome here.</div></div>
+            ) : r.status === "awaiting_approval" && sq ? (
               <div className="space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border p-3">
                   <div><div className="text-[11px] uppercase tracking-wider text-muted-foreground">Proposed purchase</div><div className="font-semibold">{sq.supplierName} {sq.isDemo && <DemoBadge />}</div></div>
                   <div className="num text-xl font-semibold text-primary">{money(sq.total * r.quantity, cur)}<span className="ml-1 text-xs text-muted-foreground">({r.quantity} x {money(sq.total, cur)})</span></div>
                 </div>
-                <textarea rows={2} className={inputCls} placeholder="Decision note (who is approving and why)" value={note} onChange={(e) => setNote(e.target.value)} data-testid="input-approval-note" />
+                <textarea rows={2} className={inputCls} placeholder="Decision note (why you are approving or rejecting)" value={note} onChange={(e) => setNote(e.target.value)} data-testid="input-approval-note" />
                 <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={confirm} onChange={(e) => setConfirm(e.target.checked)} className="h-4 w-4 accent-[hsl(217_91%_45%)]" data-testid="checkbox-confirm" />I have reviewed the cost and deadline and take responsibility for this decision.</label>
                 <div className="flex gap-2">
                   <Btn disabled={!confirm || !note.trim() || busy("approve")} onClick={() => run({ action: "approve", note }, "Approved", () => { setNote(""); setConfirm(false); })} data-testid="button-approve"><Check className="h-4 w-4" />Approve</Btn>
@@ -193,7 +197,7 @@ export default function RequestDetail() {
                 </div>
               </div>
             ) : r.status === "rejected" ? <p className="text-sm text-rose-700">Rejected. See the audit trail for the decision note.</p>
-              : approved ? <p className="text-sm text-emerald-700">Approved by a person. Purchase recording is unlocked.</p>
+              : approved ? <p className="text-sm text-emerald-700">Approved by a manager. Purchase recording is unlocked.</p>
               : <p className="text-sm text-muted-foreground">Select a quote first. Nothing can be ordered before explicit approval.</p>}
           </Step>
 

@@ -1,24 +1,38 @@
-import { db, procurementWorkspace } from "@workspace/db";
+import { db, procurementWorkspace, teamMembers } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { seedState, type ProcurementState } from "./procurement-seed";
+import { accountContext } from "./account-context";
 
 export class ProcurementError extends Error {
   constructor(message: string, public status = 400) { super(message); }
 }
 
-export async function withWorkspace<T>(fn: (state: ProcurementState) => T | Promise<T>): Promise<T> {
+type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+export async function withWorkspace<T>(fn: (state: ProcurementState, tx: Transaction) => T | Promise<T>): Promise<T> {
   return db.transaction(async tx => {
     await tx.insert(procurementWorkspace).values({ id: 1, data: seedState() }).onConflictDoNothing();
     const [row] = await tx.select().from(procurementWorkspace).where(eq(procurementWorkspace.id, 1)).for("update");
     if (!row) throw new ProcurementError("Workspace unavailable", 503);
+    const account = accountContext.getStore();
+    if (account) {
+      const member = (await tx.select().from(teamMembers).where(eq(teamMembers.userId, account.userId)))[0];
+      if (member?.status !== "active" || member.role !== account.role) {
+        throw new ProcurementError("Your workspace access has changed. Refresh to continue.", 403);
+      }
+    }
     const state = row.data as ProcurementState;
-    const result = await fn(state);
+    const result = await fn(state, tx);
     await tx.update(procurementWorkspace).set({ data: state, updatedAt: new Date() }).where(eq(procurementWorkspace.id, 1));
     return result;
   });
 }
 
 export function audit(state: ProcurementState, action: string, detail: string, requestId: number | null = null, actor = "Procurement team"): void {
+  const account = accountContext.getStore();
+  if (account) {
+    const automation = actor !== "Procurement team" && actor !== account.name ? `; via ${actor}` : "";
+    actor = `${account.name} [${account.role}; ${account.userId}${automation}]`;
+  }
   state.activity.unshift({
     id: Math.max(0, ...state.activity.map(a => a.id)) + 1,
     action, detail, requestId, actor, createdAt: new Date().toISOString(),

@@ -1,10 +1,12 @@
 import { Link } from "wouter";
 import { ShieldCheck, ArrowRight } from "lucide-react";
 import { useWorkspace, money, deadlineLabel, selectedQuote } from "@/lib/proc";
+import { useAccount } from "@/lib/account";
 import { PageHeader, Panel, PriorityPill, DemoBadge, LoadingRows, ErrorState, EmptyState } from "@/components/kit";
 
 export default function Approvals() {
   const { data, isLoading, isError, refetch } = useWorkspace();
+  const { isManager } = useAccount();
   if (isLoading) return <LoadingRows />;
   if (isError || !data) return <ErrorState onRetry={() => refetch()} />;
   const cur = data.settings.currency;
@@ -12,7 +14,7 @@ export default function Approvals() {
   const total = pending.reduce((s, r) => s + (selectedQuote(r)?.total ?? 0) * r.quantity, 0);
   return (
     <div>
-      <PageHeader eyebrow="Step 4" title="Pending decisions" sub="Nothing can be bought until a person approves it with a note. No roles are verified in this shared workspace; the note is the accountability record." />
+      <PageHeader eyebrow="Step 4" title="Pending decisions" sub={isManager ? "Nothing can be bought until a manager approves it with a note. Your decision and name are written to the audit trail." : "Nothing can be bought until a manager approves it. You can follow the queue here; approve and reject are reserved for managers."} />
       {pending.length === 0 ? <EmptyState icon={<ShieldCheck className="h-5 w-5" />} title="Queue clear" text="No purchases waiting for sign-off." /> : (
         <>
           <div className="mb-3 text-sm text-muted-foreground"><span className="num font-semibold text-foreground">{pending.length}</span> waiting, <span className="num font-semibold text-foreground">{money(total, cur)}</span> combined</div>
@@ -30,7 +32,7 @@ export default function Approvals() {
                       <div className="text-xs"><div className="flex items-center gap-1 font-semibold">{q?.supplierName ?? "No quote"}{q?.isDemo && <DemoBadge />}</div><div className="text-muted-foreground">{q ? `${q.leadHours}h lead / ${q.onTime ? "on time" : "late"}` : ""} / {deadlineLabel(r.neededBy)}</div></div>
                       <div className="num text-lg font-semibold text-primary">{q ? money(q.total * r.quantity, cur) : "-"}</div>
                     </div>
-                    <div className="mt-2 flex items-center justify-end gap-1 text-xs font-semibold text-primary">Review and decide <ArrowRight className="h-3 w-3 transition group-hover:translate-x-1" /></div>
+                    <div className="mt-2 flex items-center justify-end gap-1 text-xs font-semibold text-primary">{isManager ? "Review and decide" : "View request"} <ArrowRight className="h-3 w-3 transition group-hover:translate-x-1" /></div>
                   </Panel>
                 </Link>);
             })}

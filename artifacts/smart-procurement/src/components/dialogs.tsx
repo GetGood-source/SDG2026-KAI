@@ -1,3 +1,4 @@
+import { useAccount } from "@/lib/account";
 import { useState, type ReactNode } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useCreateRequest, useCreateSupplier, useSaveInventory, useAddQuote } from "@workspace/api-client-react";
@@ -35,9 +36,10 @@ export function NewRequestDialog({ open, onOpenChange, onCreated }: { open: bool
   const m = useCreateRequest();
   const inv = useInvalidateWorkspace();
   const { toast } = useToast();
-  const [f, setF] = useState({ partName: "", model: "", neededBy: defaultDeadline(), description: "", quantity: "1", requestedBy: "", priority: "urgent" });
+  const { account } = useAccount();
+  const [f, setF] = useState({ partName: "", model: "", neededBy: defaultDeadline(), description: "", quantity: "1", priority: "urgent" });
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => setF({ ...f, [k]: e.target.value });
-  const valid = f.partName && f.model && f.description && f.requestedBy && Number(f.quantity) >= 1 && f.neededBy;
+  const valid = f.partName && f.model && f.description && Number(f.quantity) >= 1 && f.neededBy;
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!valid) return;
@@ -59,7 +61,7 @@ export function NewRequestDialog({ open, onOpenChange, onCreated }: { open: bool
             <option value="normal">Normal</option><option value="urgent">Urgent</option><option value="critical">Critical</option>
           </select>
         </Field>
-        <div className="col-span-2"><Field label="Requested by" hint="Free text. This workspace does not verify identities."><input className={inputCls} value={f.requestedBy} onChange={set("requestedBy")} placeholder="Name of mechanic" data-testid="input-requested-by" /></Field></div>
+        <div className="col-span-2"><Field label="Requested by" hint="Taken from your verified account. Recorded by the server."><div className="flex items-center gap-2 rounded-md border bg-muted/60 px-3 py-2 text-sm" data-testid="text-requested-by"><span className="font-semibold">{account.name || account.email}</span><span className="text-xs text-muted-foreground">{account.email}</span></div></Field></div>
         <div className="col-span-2"><Field label="Description"><textarea rows={3} className={inputCls} value={f.description} onChange={set("description")} placeholder="Customer car on lift, OEM or equivalent acceptable" data-testid="input-description" /></Field></div>
         <div className="col-span-2 flex justify-end gap-2 pt-1">
           <Btn type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Btn>

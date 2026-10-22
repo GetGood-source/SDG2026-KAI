@@ -4,6 +4,65 @@
  * Api
  * OpenAPI spec version: 1.0.0
  */
+/**
+ * @nullable
+ */
+export type AccountRole = typeof AccountRole[keyof typeof AccountRole] | null;
+
+
+export const AccountRole = {
+  staff: 'staff',
+  manager: 'manager',
+} as const;
+
+export type AccountStatus = typeof AccountStatus[keyof typeof AccountStatus];
+
+
+export const AccountStatus = {
+  active: 'active',
+  pending: 'pending',
+  revoked: 'revoked',
+  unverified: 'unverified',
+} as const;
+
+export interface Account {
+  userId: string;
+  name: string;
+  email: string;
+  /** @nullable */
+  role: AccountRole;
+  status: AccountStatus;
+}
+
+export type TeamMemberInputRole = typeof TeamMemberInputRole[keyof typeof TeamMemberInputRole];
+
+
+export const TeamMemberInputRole = {
+  staff: 'staff',
+  manager: 'manager',
+} as const;
+
+export type TeamMemberInputStatus = typeof TeamMemberInputStatus[keyof typeof TeamMemberInputStatus];
+
+
+export const TeamMemberInputStatus = {
+  active: 'active',
+  revoked: 'revoked',
+} as const;
+
+export interface TeamMemberInput {
+  email: string;
+  role: TeamMemberInputRole;
+  status: TeamMemberInputStatus;
+}
+
+export type TeamMember = TeamMemberInput & ({
+  id: number;
+  /** @nullable */
+  userId: string | null;
+  joinedAt: string;
+});
+
 export interface HealthStatus {
   status: string;
 }
@@ -27,8 +86,6 @@ export interface RequestInput {
   description: string;
   /** @minimum 1 */
   quantity: number;
-  /** @minLength 1 */
-  requestedBy: string;
   priority: RequestInputPriority;
 }
 
@@ -68,6 +125,8 @@ export type Quote = QuoteInput & {
 };
 
 export type PartRequest = RequestInput & ({
+  requestedBy: string;
+  requestedById?: string;
   id: number;
   reference: string;
   status: PartRequestStatus;

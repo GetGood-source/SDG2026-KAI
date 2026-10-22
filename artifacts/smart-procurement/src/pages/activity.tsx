@@ -24,7 +24,7 @@ export default function Activity() {
   };
   return (
     <div>
-      <PageHeader eyebrow="Accountability" title="Audit trail" sub="Every action, in order. Actors are self-reported names; this workspace has no sign-in."
+      <PageHeader eyebrow="Accountability" title="Audit trail" sub="Every action, in order. Actors are the verified accounts that performed each action."
         actions={<Btn variant="outline" onClick={exportCsv} disabled={!rows.length} data-testid="button-export-csv"><Download className="h-4 w-4" />Export CSV ({rows.length})</Btn>} />
       <div className="mb-3 flex flex-col gap-2 md:flex-row">
         <div className="relative flex-1"><Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" /><input className={cn(inputCls, "pl-8")} placeholder="Search detail, actor, action" value={q} onChange={(e) => setQ(e.target.value)} data-testid="input-search-activity" /></div>
