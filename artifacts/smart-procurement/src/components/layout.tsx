@@ -6,6 +6,8 @@ import { cn } from "@/lib/utils";
 import { useClerk } from "@clerk/react";
 import { useAccount } from "@/lib/account";
 
+const demoMode = import.meta.env.VITE_PROCUREMENT_DEMO_MODE === "true";
+
 const NAV = [
   { href: "/dashboard", label: "Overview", icon: LayoutGrid },
   { href: "/requests", label: "Requests", icon: FileText },
@@ -30,7 +32,7 @@ export function Layout({ children }: { children: ReactNode }) {
 
   const nav = (
     <nav className="flex flex-col gap-0.5 px-3">
-      {NAV.filter((n) => !("manager" in n) || isManager).map((n) => {
+      {NAV.filter((n) => (!("manager" in n) || isManager) && !(demoMode && n.href === "/team")).map((n) => {
         const active = loc.startsWith(n.href);
         const c = n.badge ? counts[n.badge] : 0;
         return (
@@ -61,21 +63,25 @@ export function Layout({ children }: { children: ReactNode }) {
 
   const foot = (
     <div className="mt-auto space-y-2 p-4 text-[11px] text-sidebar-foreground/60">
-      {data?.demoMode && <div className="rounded border border-dashed border-amber-400/60 px-2 py-1.5 text-amber-200">Demo mode: some suppliers and quotes are sample data.</div>}
-      <div className="flex gap-1.5"><Info className="mt-0.5 h-3 w-3 shrink-0" />Signed-in team workspace. No email or purchasing integrations connected; orders are placed by you outside the system.</div>
+      {demoMode && <div className="rounded border border-amber-400/70 bg-amber-950/40 px-2 py-1.5 text-amber-100">Open demo: roles are simulated. Do not enter real or sensitive data.</div>}
+      {data?.demoMode && <div className="rounded border border-dashed border-amber-400/60 px-2 py-1.5 text-amber-200">Some suppliers and quotes are sample data.</div>}
+      <div className="flex gap-1.5"><Info className="mt-0.5 h-3 w-3 shrink-0" />{demoMode ? "No sign-in required. Demo roles are not a security boundary." : "Signed-in team workspace."} No email or purchasing integrations connected; orders are placed by you outside the system.</div>
       <div className="flex items-center gap-2.5 rounded-md border border-sidebar-border bg-white/5 p-2.5">
         <div className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-sidebar-primary/20 text-[11px] font-bold text-white ring-1 ring-sidebar-primary/50" data-testid="img-avatar">{initials}</div>
         <div className="min-w-0 flex-1">
           <div className="truncate text-[12px] font-semibold text-white" data-testid="text-account-name">{account.name || account.email}</div>
           <div className="flex items-center gap-1.5"><span className={cn("rounded px-1 text-[9px] font-bold uppercase tracking-wider", isManager ? "bg-sidebar-primary text-white" : "bg-white/10 text-sidebar-foreground")} data-testid="text-account-role">{account.role}</span><span className="truncate">{account.email}</span></div>
         </div>
-        <button type="button" title="Sign out" onClick={() => signOut({ redirectUrl: base || "/" })} className="rounded p-1.5 text-sidebar-foreground/70 transition hover:bg-white/10 hover:text-white" data-testid="button-logout"><LogOut className="h-4 w-4" /></button>
+        {demoMode
+          ? <Link href="/" title="Switch demo role" className="whitespace-nowrap rounded border border-white/20 px-2 py-1 text-[10px] font-semibold text-white hover:bg-white/10" data-testid="button-switch-demo-role">Switch role</Link>
+          : <button type="button" title="Sign out" onClick={() => signOut({ redirectUrl: base || "/" })} className="rounded p-1.5 text-sidebar-foreground/70 transition hover:bg-white/10 hover:text-white" data-testid="button-logout"><LogOut className="h-4 w-4" /></button>}
       </div>
     </div>
   );
 
   return (
     <div className="min-h-[100dvh] bg-background">
+      {demoMode && <div className="sticky top-0 z-40 border-b border-amber-300 bg-amber-50 px-4 py-2 text-center text-xs text-amber-950 md:pl-60"><strong>Demo mode:</strong> Anyone can switch roles. Do not enter real purchasing or personal data.</div>}
       <aside className="fixed inset-y-0 left-0 hidden w-60 flex-col bg-sidebar md:flex">{brand}{nav}{foot}</aside>
       <div className="sticky top-0 z-30 flex items-center justify-between border-b bg-sidebar px-4 py-2.5 md:hidden">
         <span className="text-sm font-bold text-white">Smart Procurement</span>

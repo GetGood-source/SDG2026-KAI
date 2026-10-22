@@ -1,4 +1,5 @@
 import { Link } from "wouter";
+import { useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, FileText, Search, Scale, ShieldCheck, Truck, Lock } from "lucide-react";
 
 const STEPS = [
@@ -10,9 +11,13 @@ const STEPS = [
 ];
 
 export default function Landing() {
+  const queryClient = useQueryClient();
+  const demoMode = import.meta.env.VITE_PROCUREMENT_DEMO_MODE === "true";
   const chooseAccount = (role: "staff" | "manager") => () => {
     window.sessionStorage.setItem("smart-procurement-login-choice", role);
+    if (demoMode) queryClient.clear();
   };
+  const entryHref = demoMode ? "/dashboard" : "/sign-in";
   return (
     <div className="min-h-[100dvh] bg-background">
       <header className="mx-auto flex max-w-6xl items-center justify-between px-5 py-5">
@@ -21,8 +26,9 @@ export default function Landing() {
           <span className="text-sm font-bold">Smart Procurement</span>
         </div>
         <div className="flex items-center gap-2">
-          <Link href="/sign-in" onClick={chooseAccount("staff")} className="rounded-md border bg-card px-3 py-2 text-sm font-semibold text-foreground/80 transition hover:bg-secondary" data-testid="link-employee-login">Employee Login</Link>
-          <Link href="/sign-in" onClick={chooseAccount("manager")} className="rounded-md bg-primary px-3.5 py-2 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90" data-testid="link-manager-login">Manager Login</Link>
+          {demoMode && <span className="hidden rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-bold uppercase text-amber-900 sm:inline">Demo · no sign-in · no real data</span>}
+          <Link href={entryHref} onClick={chooseAccount("staff")} className="rounded-md border bg-card px-3 py-2 text-sm font-semibold text-foreground/80 transition hover:bg-secondary" data-testid="link-employee-login">Employee</Link>
+          <Link href={entryHref} onClick={chooseAccount("manager")} className="rounded-md bg-primary px-3.5 py-2 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90" data-testid="link-manager-login">Manager</Link>
         </div>
       </header>
 
@@ -33,8 +39,8 @@ export default function Landing() {
             <h1 className="text-4xl font-extrabold leading-[1.05] tracking-tight md:text-6xl">The car is on the lift.<br /><span className="text-primary">The part is not.</span></h1>
             <p className="mt-5 max-w-lg text-base leading-relaxed text-muted-foreground">A shared workspace for repair shops and other SMEs to request a part, compare verified quotes, get a manager's sign-off and track the order to the door, with every step on the record.</p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="/sign-in" onClick={chooseAccount("staff")} className="group inline-flex items-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90" data-testid="link-hero-sign-up">Employee Login <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" /></Link>
-              <Link href="/sign-in" onClick={chooseAccount("manager")} className="inline-flex items-center rounded-md border bg-card px-5 py-3 text-sm font-semibold transition hover:bg-secondary" data-testid="link-hero-sign-in">Manager Login</Link>
+              <Link href={entryHref} onClick={chooseAccount("staff")} className="group inline-flex items-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90" data-testid="link-hero-sign-up">{demoMode ? "Enter as employee" : "Employee Login"} <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" /></Link>
+              <Link href={entryHref} onClick={chooseAccount("manager")} className="inline-flex items-center rounded-md border bg-card px-5 py-3 text-sm font-semibold transition hover:bg-secondary" data-testid="link-hero-sign-in">{demoMode ? "Enter as manager" : "Manager Login"}</Link>
             </div>
           </div>
           <div className="rise relative self-center" style={{ animationDelay: ".12s" }}>
@@ -74,7 +80,7 @@ export default function Landing() {
           <div>
             <Lock className="h-5 w-5 text-sidebar-primary" />
             <h2 className="mt-3 text-xl font-bold text-white">Access by invitation of a manager</h2>
-            <p className="mt-2 text-sm leading-relaxed">Signing up does not open the workspace on its own. A manager authorizes your email first, then you verify it. Staff source and order; managers also approve purchases and manage the team.</p>
+            <p className="mt-2 text-sm leading-relaxed">{demoMode ? "Choose Employee or Manager at the top to enter immediately. This is an open demo: the role switch is simulated and is not a security boundary." : "Signing up does not open the workspace on its own. A manager authorizes your email first, then you verify it. Staff source and order; managers also approve purchases and manage the team."}</p>
           </div>
           <div className="text-sm leading-relaxed">
             <div className="font-semibold text-white">What it does not do</div>

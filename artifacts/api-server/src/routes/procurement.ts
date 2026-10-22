@@ -21,7 +21,9 @@ const editable = (r: PartRequest) => {
 
 router.get("/procurement/workspace", async (_req, res): Promise<void> => {
   const state = await withWorkspace(s => {
-    s.integrationNote = "Verified staff and manager accounts protect this workspace. Managers control purchase approvals and team access. Sample suppliers, quotes and historical demo activity are not live evidence. Google search opens externally; record verified quotes manually. Follow-ups are drafts, not sent emails. Purchase orders are tracked internally, not submitted to suppliers.";
+    s.integrationNote = process.env.PROCUREMENT_DEMO_MODE === "true"
+      ? "Open demo mode: employee and manager roles are simulated and can be changed by any visitor. Do not enter real or sensitive data. Sample suppliers and quotes are not live evidence. Google search opens externally; record verified quotes manually. Follow-ups are drafts, not sent emails. Purchase orders are tracked internally, not submitted to suppliers."
+      : "Verified staff and manager accounts protect this workspace. Managers control purchase approvals and team access. Sample suppliers, quotes and historical demo activity are not live evidence. Google search opens externally; record verified quotes manually. Follow-ups are drafts, not sent emails. Purchase orders are tracked internally, not submitted to suppliers.";
     refreshSummary(s);
     return s;
   });

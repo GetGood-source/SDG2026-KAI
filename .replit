@@ -23,3 +23,7 @@ timeoutMs = 20000
 
 [userenv.shared]
 INITIAL_MANAGER_EMAIL = "manageremail@gmail.com"
+
+[userenv.development]
+PROCUREMENT_DEMO_MODE = "true"
+VITE_PROCUREMENT_DEMO_MODE = "true"

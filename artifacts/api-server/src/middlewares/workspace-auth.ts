@@ -10,6 +10,20 @@ import { audit, withWorkspace } from "../lib/procurement-store";
 // Authentication verifies identity; membership is independently controlled by managers.
 export const identifyAccount: RequestHandler = async (req, res, next) => {
   res.setHeader("Cache-Control", "no-store");
+  if (process.env.PROCUREMENT_DEMO_MODE === "true") {
+    const requestedRole = req.get("x-demo-role");
+    const role = requestedRole === "manager" ? "manager" : "staff";
+    const account: Account = {
+      userId: `demo-${role}`,
+      name: role === "manager" ? "Demo Manager" : "Demo Employee",
+      email: role === "manager" ? "manager@demo.local" : "employee@demo.local",
+      role,
+      status: "active",
+    };
+    res.locals.account = account;
+    accountContext.run(account, next);
+    return;
+  }
   const userId = getAuth(req).userId;
   if (!userId) { res.status(401).json({ error: "Sign in to continue." }); return; }
   try {

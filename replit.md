@@ -7,6 +7,7 @@ An SME procurement MVP for requesting spare parts, comparing supplier quotations
 - Starts with a Malaysian car repair shop, but part/model fields and configurable industry support other SME sectors.
 - User requested a white-and-blue design.
 - Public homepage must present separate Employee Login and Manager Login actions in the top navigation. Keep the role choice simple and prominent.
+- In the development preview, those choices enter immediately as simulated employee or manager roles. This demo bypass is development-only; never enable `PROCUREMENT_DEMO_MODE` or `VITE_PROCUREMENT_DEMO_MODE` in production.
 - Five stages: request, connected stock/supplier data, explained decision, human approval, visible purchase/delivery outcome.
 - Includes inventory management, supplier directory, searchable audit trail and CSV export.
 - One company workspace, protected by verified Clerk accounts and manager-controlled membership. Unknown signups cannot access procurement data.
@@ -46,6 +47,7 @@ An SME procurement MVP for requesting spare parts, comparing supplier quotations
 - Backend enforces valid transitions, manager-only purchase decisions and ordering only after approval. New audit activity records the authenticated identity; historical demonstration records retain their sample labels.
 - The frontend refreshes shared state every 20 seconds and invalidates the workspace query after writes.
 - Identity is handled by Replit-managed Clerk, with database-backed workspace membership. No app-managed passwords or browser bearer-token plumbing.
+- Demo mode intentionally permits anyone in the development preview to switch to manager. The role switch is not a security boundary; do not use demo data or assume approvals are access-controlled in that environment. Published production defaults to verified sign-in and manager permissions.
 - The first manager is claimed only by a verified primary email matching the owner-configured `INITIAL_MANAGER_EMAIL`. Existing memberships, including revocations and demotions, are never reset by bootstrap. Keep at least one active manager.
 - **Why:** making the first arbitrary signup a manager would expose procurement records. The configured owner must prove email ownership, and future logins must not undo deliberate access changes.
 

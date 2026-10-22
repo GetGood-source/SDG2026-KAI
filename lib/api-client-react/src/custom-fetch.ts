@@ -336,6 +336,10 @@ export async function customFetch<T = unknown>(
   }
 
   const headers = mergeHeaders(isRequest(input) ? input.headers : undefined, headersInit);
+  if (typeof window !== "undefined") {
+    const role = window.sessionStorage.getItem("smart-procurement-login-choice");
+    if (role === "manager" || role === "staff") headers.set("x-demo-role", role);
+  }
 
   if (
     typeof init.body === "string" &&

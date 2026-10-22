@@ -33,6 +33,7 @@ const clerkPubKey = publishableKeyFromHost(
 const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
+const demoMode = import.meta.env.VITE_PROCUREMENT_DEMO_MODE === "true";
 
 function stripBase(path: string): string {
   return basePath && path.startsWith(basePath)
@@ -150,6 +151,7 @@ function ClerkQueryClientCacheInvalidator() {
 }
 
 function HomeRedirect() {
+  if (demoMode) return <Landing />;
   return (
     <>
       <Show when="signed-in"><Redirect to="/dashboard" /></Show>
@@ -200,6 +202,7 @@ function Workspace() {
 }
 
 function Protected() {
+  if (demoMode) return <Workspace />;
   return (
     <>
       <Show when="signed-in"><Workspace /></Show>
