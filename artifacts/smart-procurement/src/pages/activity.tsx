@@ -5,6 +5,60 @@ import { useWorkspace, fmtDate } from "@/lib/proc";
 import { PageHeader, Panel, LoadingRows, ErrorState, EmptyState, Btn, inputCls } from "@/components/kit";
 import { cn } from "@/lib/utils";
 
+function AuditDetail({ detail }: { detail: string }) {
+  const sources: string[] = [];
+  const text = detail
+    .replace(/https?:\/\/[^\s<>"']+/gi, (raw) => {
+      const url = raw.replace(/[),.;!?}\]]+$/, "");
+      const punctuation = raw.slice(url.length);
+      if (url) sources.push(url);
+      return punctuation;
+    })
+    .replace(/\bsource(?:\s+url)?\s*:\s*(?=[.,;]|$)/gi, "")
+    .replace(/\s+([,.;])/g, "$1")
+    .replace(/([,.;])(?:\s*[.,;])+/g, "$1")
+    .replace(/^[,.;]\s*/, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+  const uniqueSources = Array.from(new Set(sources));
+
+  return (
+    <div className="min-w-0 break-words">
+      <p>{text || (uniqueSources.length ? "Supplier source links" : detail)}</p>
+      {uniqueSources.length > 0 && (
+        <details className="mt-1.5">
+          <summary className="w-fit cursor-pointer text-xs font-medium text-primary hover:underline">
+            View {uniqueSources.length} source {uniqueSources.length === 1 ? "link" : "links"}
+          </summary>
+          <ul className="mt-1 space-y-1">
+            {uniqueSources.map((url, index) => {
+              let label = `Source ${index + 1}`;
+              try {
+                label = new URL(url).hostname.replace(/^www\./, "");
+              } catch {
+                // Keep the concise fallback label for any malformed URL.
+              }
+              return (
+                <li key={`${url}-${index}`}>
+                  <a
+                    href={url}
+                    target="_blank"
+                    rel="noreferrer"
+                    title={url}
+                    className="inline-block max-w-full truncate text-xs text-primary hover:underline"
+                  >
+                    {label} <span className="text-muted-foreground">↗</span>
+                  </a>
+                </li>
+              );
+            })}
+          </ul>
+        </details>
+      )}
+    </div>
+  );
+}
+
 export default function Activity() {
   const { data, isLoading, isError, refetch } = useWorkspace();
   const [q, setQ] = useState("");
@@ -41,7 +95,7 @@ export default function Activity() {
                 <tr key={a.id} className="align-top transition hover:bg-secondary/40" data-testid={`row-activity-${a.id}`}>
                   <td className="num whitespace-nowrap px-4 py-2 text-xs text-muted-foreground">{fmtDate(a.createdAt)}</td>
                   <td className="px-4 py-2"><span className="whitespace-nowrap rounded bg-secondary px-1.5 py-0.5 text-[11px] font-semibold text-secondary-foreground">{a.action}</span></td>
-                  <td className="px-4 py-2">{a.detail}</td>
+                  <td className="max-w-[34rem] px-4 py-2"><AuditDetail detail={a.detail} /></td>
                   <td className="px-4 py-2 text-xs">{a.actor}</td>
                   <td className="num px-4 py-2 text-xs">{a.requestId ? <Link href={`/requests/${a.requestId}`} className="text-primary hover:underline">{refOf(a.requestId) ?? `#${a.requestId}`}</Link> : "-"}</td>
                 </tr>))}
