@@ -15,7 +15,7 @@ const STEPS = ["Request", "Connected data", "Decision", "Approval", "Outcome"];
 
 function Step({ n, title, state, children }: { n: number; title: string; state: "done" | "current" | "locked"; children: ReactNode }) {
   return (
-    <div className="relative pl-11" id={`step-${n}`}>
+    <div className="relative min-w-0 pl-8 sm:pl-11" id={`step-${n}`}>
       <div className={cn("num absolute left-0 top-3 grid h-7 w-7 place-items-center rounded-full text-xs font-semibold ring-4 ring-background",
         state === "done" ? "bg-primary text-white" : state === "current" ? "bg-white text-primary ring-2 ring-primary" : "bg-muted text-muted-foreground")}>
         {state === "done" ? <Check className="h-3.5 w-3.5" /> : n}
@@ -88,7 +88,7 @@ export default function RequestDetail() {
           <h1 className="mt-1 text-2xl font-extrabold tracking-tight md:text-[28px]" data-testid="text-part-name">{r.partName}</h1>
           <div className="text-sm text-muted-foreground">{r.model} / qty {r.quantity} / requested by {r.requestedBy}</div>
         </div>
-        <div className="flex items-center gap-0">
+        <div className="flex max-w-full flex-wrap items-center gap-y-2">
           {STEPS.map((s, i) => {
             const st = stepState(i + 1);
             return (
@@ -100,8 +100,8 @@ export default function RequestDetail() {
         </div>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-[1fr_300px]">
-        <div className="relative space-y-4 before:absolute before:bottom-4 before:left-[13px] before:top-4 before:w-px before:bg-border">
+      <div className="grid min-w-0 grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_300px]">
+        <div className="relative min-w-0 space-y-4 before:absolute before:bottom-4 before:left-[13px] before:top-4 before:w-px before:bg-border">
           <Step n={1} title="Request" state="done">
             <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm md:grid-cols-4">
               {[["Needed by", fmtDate(r.neededBy)], ["Time left", deadlineLabel(r.neededBy)], ["Logged", fmtDate(r.createdAt)], ["Requester", r.requestedBy]].map(([k, v]) => (

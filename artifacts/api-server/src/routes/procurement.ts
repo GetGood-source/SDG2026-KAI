@@ -75,6 +75,9 @@ router.post("/procurement/requests/:id/discovery/quote", async (req, res): Promi
     editable(r);
     const candidate = r.discovery?.candidates.find(c => c.id === input.candidateId);
     if (!candidate) throw new ProcurementError("This discovered lead is no longer available. Refresh the request and choose a current lead.", 404);
+    if (candidate.kind === "nearby" && normalize(input.supplierName) !== normalize(candidate.name)) {
+      throw new ProcurementError("Keep the Maps supplier name unchanged so its reviews are not assigned to a different business. Record a separate manual quote for a different seller.");
+    }
     const rating = candidate.rating ?? input.rating;
     let supplier = s.suppliers.find(item => !item.isDemo && normalize(item.name) === normalize(input.supplierName));
     if (!supplier) {

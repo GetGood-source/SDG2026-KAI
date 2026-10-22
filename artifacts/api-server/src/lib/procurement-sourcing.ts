@@ -32,7 +32,8 @@ export async function sourcePartRequest(id: number, explicitDiscovery = false): 
       return { request };
     }
     const previous = request.discovery;
-    if (previous && previous.location === state.settings.searchLocation && previous.radiusKm === state.settings.searchRadiusKm && Date.parse(previous.cacheUntil) > Date.now()) {
+    const retryFailedSearch = explicitDiscovery && previous?.status === "failed";
+    if (!retryFailedSearch && previous && previous.location === state.settings.searchLocation && previous.radiusKm === state.settings.searchRadiusKm && Date.parse(previous.cacheUntil) > Date.now()) {
       return { request };
     }
     const today = new Date().toISOString().slice(0, 10);

@@ -73,6 +73,15 @@ function googleListings(data: ObjectValue, request: PartRequest): SupplierCandid
       candidate.priceCurrency = price.currency;
       candidate.priceText = `${price.text} advertised; unit/pack and fitment unconfirmed`;
       candidate.priceSourceUrl = link;
+    } else {
+      const mentions = [...snippet.matchAll(/\b(?:RM|MYR|USD|SGD|GBP)\s*[\d,]+(?:\.\d{1,2})?/gi)].map(m => m[0]);
+      if (mentions.length === 1) {
+        candidate.priceText = `${mentions[0]} advertised for this listing; requested model/year or final terms not established. Quote required.`;
+        candidate.priceSourceUrl = link;
+      } else if (mentions.length > 1) {
+        candidate.priceText = "Listing contains price ranges or discounts; inspect the source. Exact-part quote required.";
+        candidate.priceSourceUrl = link;
+      }
     }
     return [candidate];
   });

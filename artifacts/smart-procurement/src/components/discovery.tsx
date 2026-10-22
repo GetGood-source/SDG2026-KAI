@@ -32,10 +32,10 @@ function CandidateRow({ c, d, onChoose, onConfirm, choosing, locked, canAct }: {
   const preferred = d.preferredCandidateId === c.id;
   const recommended = d.recommendedCandidateId === c.id;
   return (
-    <li className={cn("group relative rounded-lg border bg-card p-3 transition hover:-translate-y-px hover:border-primary/40 hover:shadow-[0_8px_20px_-14px_hsl(217_80%_30%/0.5)]", preferred && "border-primary ring-2 ring-primary/15")} data-testid={`card-candidate-${c.id}`}>
+    <li className={cn("group relative min-w-0 max-w-full break-words rounded-lg border bg-card p-3 transition hover:-translate-y-px hover:border-primary/40 hover:shadow-[0_8px_20px_-14px_hsl(217_80%_30%/0.5)]", preferred && "border-primary ring-2 ring-primary/15")} data-testid={`card-candidate-${c.id}`}>
       {preferred && <span className="absolute -left-px top-3 h-8 w-1 rounded-r bg-primary" />}
       <div className="flex flex-wrap items-start justify-between gap-2">
-        <div className="min-w-0">
+        <div className="min-w-0 max-w-full">
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="font-semibold" data-testid={`text-candidate-name-${c.id}`}>{c.name || "Unnamed result"}</span>
             {recommended && <span className="rounded bg-primary px-1.5 text-[10px] font-bold uppercase text-white">Top lead</span>}
@@ -81,6 +81,7 @@ export function DiscoveryPanel({ r, run, busy, searchUrl }: { r: PartRequest; ru
   const nearby = d?.candidates.filter((c) => c.kind === "nearby") ?? [];
   const web = d?.candidates.filter((c) => c.kind === "web") ?? [];
   const preferred = d?.candidates.find((c) => c.id === d.preferredCandidateId);
+  const preferredQuote = preferred && r.quotes.find(q => q.sourceUrl === (preferred.priceSourceUrl || preferred.sourceUrl));
 
   const list = (items: SupplierCandidate[]) => (
     <ul className="space-y-2">
@@ -94,7 +95,7 @@ export function DiscoveryPanel({ r, run, busy, searchUrl }: { r: PartRequest; ru
   );
 
   return (
-    <div className="mt-4 rounded-lg border border-primary/25 bg-gradient-to-b from-secondary/50 to-transparent p-3" data-testid="panel-discovery">
+    <div className="mt-4 min-w-0 max-w-full break-words rounded-lg border border-primary/25 bg-gradient-to-b from-secondary/50 to-transparent p-3" data-testid="panel-discovery">
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <Radar className={cn("h-4 w-4 text-primary", discovering && "animate-spin")} />
@@ -122,8 +123,8 @@ export function DiscoveryPanel({ r, run, busy, searchUrl }: { r: PartRequest; ru
           {d.recommendation && <div className="mb-2 rounded-md border-l-4 border-primary bg-card p-2.5 text-xs" data-testid="text-discovery-recommendation"><div className="mb-0.5 text-[10px] font-bold uppercase tracking-wider text-primary">Server lead ranking (separate from quote scoring)</div><p className="whitespace-pre-line">{d.recommendation}</p></div>}
           {preferred && (
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2 rounded-md border border-dashed border-primary bg-card px-3 py-2 text-xs" data-testid="text-preferred-lead">
-              <span><Crosshair className="mr-1 inline h-3.5 w-3.5 text-primary" />Preferred lead: <b>{preferred.name}</b>. Not approvable until a confirmed quote is recorded.</span>
-              {!closed && <Btn className="px-2 py-1 text-xs" onClick={() => setConfirming(preferred)} data-testid="button-confirm-preferred"><ClipboardCheck className="h-3 w-3" />Record confirmed quote</Btn>}
+              <span><Crosshair className="mr-1 inline h-3.5 w-3.5 text-primary" />Preferred source lead: <b>{preferred.name}</b>. {preferredQuote ? `Recorded quote on file from ${preferredQuote.supplierName}; see the quote and approval steps.` : "Not approvable until a confirmed quote is recorded."}</span>
+              {!closed && !preferredQuote && <Btn className="px-2 py-1 text-xs" onClick={() => setConfirming(preferred)} data-testid="button-confirm-preferred"><ClipboardCheck className="h-3 w-3" />Record confirmed quote</Btn>}
             </div>)}
 
           <div className="mb-1.5 mt-3 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground"><MapPin className="h-3 w-3" />Nearby on Google Maps ({nearby.length})</div>
@@ -180,8 +181,8 @@ function ConfirmQuoteDialog({ requestId, c, onClose }: { requestId: number; c: S
           <DialogDescription>From lead "{c.name}". Enter only what the seller confirmed to you directly. Nothing here is taken as fact from the search result.</DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="grid grid-cols-2 gap-3">
-          <div className="col-span-2"><Field label="Verified seller name" hint={c.kind === "web" ? "Web listings may be marketplaces or resellers. Enter the actual seller you spoke to." : "Change it if the actual seller differs from the Maps listing."}>
-            <input className={inputCls} value={f.supplierName} onChange={set("supplierName")} data-testid="input-confirm-supplier" /></Field></div>
+          <div className="col-span-2"><Field label="Verified seller name" hint={c.kind === "web" ? "Web listings may be marketplaces or resellers. Enter the actual seller you spoke to." : "Maps name is fixed to preserve review attribution. Use a separate manual quote for a different seller."}>
+            <input className={inputCls} value={f.supplierName} onChange={set("supplierName")} readOnly={c.kind === "nearby"} data-testid="input-confirm-supplier" /></Field></div>
           <Field label={`Confirmed unit price (${currency})`} hint={c.publishedPrice != null ? c.priceCurrency === currency ? "Prefilled advertised price; reconfirm directly with the supplier." : `Listing uses ${c.priceCurrency}; enter a confirmed ${currency} quote. No currency conversion is performed.` : undefined}>
             <input type="number" step="0.01" min={0.01} className={inputCls} value={f.price} onChange={set("price")} data-testid="input-confirm-price" /></Field>
           <Field label={`Shipping (${currency})`}><input type="number" step="0.01" min={0} className={inputCls} value={f.shipping} onChange={set("shipping")} data-testid="input-confirm-shipping" /></Field>

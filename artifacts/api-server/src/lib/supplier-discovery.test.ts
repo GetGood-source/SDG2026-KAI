@@ -22,6 +22,7 @@ test("live response mapping filters distance and unsafe URLs, preserves review e
     } else {
       payload = { organic_results: [
         { title: "Alternator Toyota Vios 2019", snippet: "Advertised listing RM 285.00", link: "https://parts.example.com/alternator" },
+        { title: "Alternator Toyota Vios variant unspecified", snippet: "RM420.00", link: "https://other-parts.example.com/unspecified" },
         { title: "Unsafe result", link: "javascript:alert(1)" },
       ] };
     }
@@ -32,7 +33,10 @@ test("live response mapping filters distance and unsafe URLs, preserves review e
   const result = await discoverSuppliers(request, { ...state.settings, searchLocation: "Test-only search centre" });
   assert.equal(result.status, "complete");
   assert.equal(result.candidates.filter(c => c.kind === "nearby").length, 1);
-  assert.equal(result.candidates.filter(c => c.kind === "web").length, 1);
+  assert.equal(result.candidates.filter(c => c.kind === "web").length, 2);
+  const unspecified = result.candidates.find(c => c.name === "other-parts.example.com")!;
+  assert.equal(unspecified.publishedPrice, null);
+  assert.match(unspecified.priceText, /RM420.00 advertised/);
   const local = result.candidates.find(c => c.kind === "nearby")!;
   assert.equal(local.rating, 4.7);
   assert.equal(local.reviewCount, 60);
