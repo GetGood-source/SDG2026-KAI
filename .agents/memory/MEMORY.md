@@ -1,0 +1,1 @@
+- [Procurement evidence](procurement-evidence.md) — preserve the distinction between recorded evidence, demo data, AI explanations and external actions.

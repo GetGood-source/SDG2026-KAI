@@ -1,36 +1,263 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
-  version: 0.1.0
-  description: API specification
+  version: 1.0.0
 servers:
   - url: /api
-    description: Base API path
-tags:
-  - name: health
-    description: Health operations
 paths:
   /healthz:
     get:
       operationId: healthCheck
-      tags: [health]
-      summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
           content:
             application/json:
-              schema:
-                $ref: "#/components/schemas/HealthStatus"
+              schema: { $ref: "#/components/schemas/HealthStatus" }
+  /procurement/workspace:
+    get:
+      operationId: getWorkspace
+      responses:
+        "200":
+          description: Complete current procurement workspace
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Workspace" }
+  /procurement/requests:
+    post:
+      operationId: createRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RequestInput" }
+      responses:
+        "201":
+          description: Request created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PartRequest" }
+  /procurement/requests/{id}/action:
+    post:
+      operationId: requestAction
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ActionInput" }
+      responses:
+        "200":
+          description: Updated request
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PartRequest" }
+  /procurement/requests/{id}/quotes:
+    post:
+      operationId: addQuote
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/QuoteInput" }
+      responses:
+        "201":
+          description: Quote recorded
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PartRequest" }
+  /procurement/suppliers:
+    post:
+      operationId: createSupplier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SupplierInput" }
+      responses:
+        "201":
+          description: Supplier created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Supplier" }
+  /procurement/inventory:
+    post:
+      operationId: saveInventory
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/InventoryInput" }
+      responses:
+        "201":
+          description: Inventory saved
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/InventoryItem" }
+  /procurement/settings:
+    put:
+      operationId: saveSettings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/Settings" }
+      responses:
+        "200":
+          description: Settings saved
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Settings" }
 components:
   schemas:
     HealthStatus:
       type: object
+      required: [status]
       properties:
-        status:
-          type: string
-      required:
-        - status
-
+        status: { type: string }
+    RequestInput:
+      type: object
+      required: [partName, model, neededBy, description, quantity, requestedBy, priority]
+      properties:
+        partName: { type: string, minLength: 1 }
+        model: { type: string, minLength: 1 }
+        neededBy: { type: string }
+        description: { type: string, minLength: 1 }
+        quantity: { type: integer, minimum: 1 }
+        requestedBy: { type: string, minLength: 1 }
+        priority: { type: string, enum: [normal, urgent, critical] }
+    PartRequest:
+      allOf:
+        - $ref: "#/components/schemas/RequestInput"
+        - type: object
+          required: [id, reference, status, createdAt, quotes, recommendation, recommendationMode, selectedQuoteId, orderReference, searchUrl, inventoryAvailable]
+          properties:
+            id: { type: integer }
+            reference: { type: string }
+            status: { type: string, enum: [new, sourcing, awaiting_approval, approved, ordered, delivered, rejected] }
+            createdAt: { type: string }
+            quotes:
+              type: array
+              items: { $ref: "#/components/schemas/Quote" }
+            recommendation: { type: string }
+            recommendationMode: { type: string }
+            selectedQuoteId: { type: [string, "null"] }
+            orderReference: { type: [string, "null"] }
+            searchUrl: { type: string }
+            inventoryAvailable: { type: integer }
+    QuoteInput:
+      type: object
+      required: [supplierId, price, shipping, leadHours, available, sourceUrl]
+      properties:
+        supplierId: { type: integer }
+        price: { type: number, minimum: 0.01 }
+        shipping: { type: number, minimum: 0 }
+        leadHours: { type: number, minimum: 0 }
+        available: { type: boolean }
+        sourceUrl: { type: string }
+    Quote:
+      allOf:
+        - $ref: "#/components/schemas/QuoteInput"
+        - type: object
+          required: [id, supplierName, rating, score, total, onTime, isDemo]
+          properties:
+            id: { type: string }
+            supplierName: { type: string }
+            rating: { type: number }
+            score: { type: number }
+            total: { type: number }
+            onTime: { type: boolean }
+            isDemo: { type: boolean }
+    ActionInput:
+      type: object
+      required: [action]
+      properties:
+        action: { type: string, enum: [source, recommend, select, approve, reject, order, deliver, follow_up] }
+        quoteId: { type: string }
+        note: { type: string }
+    SupplierInput:
+      type: object
+      required: [name, email, category, rating, leadHours, location]
+      properties:
+        name: { type: string, minLength: 1 }
+        email: { type: string }
+        category: { type: string, minLength: 1 }
+        rating: { type: number, minimum: 0, maximum: 5 }
+        leadHours: { type: number, minimum: 0 }
+        location: { type: string }
+    Supplier:
+      allOf:
+        - $ref: "#/components/schemas/SupplierInput"
+        - type: object
+          required: [id, isDemo]
+          properties:
+            id: { type: integer }
+            isDemo: { type: boolean }
+    InventoryInput:
+      type: object
+      required: [partName, model, quantity, minimum, location]
+      properties:
+        partName: { type: string, minLength: 1 }
+        model: { type: string, minLength: 1 }
+        quantity: { type: integer, minimum: 0 }
+        minimum: { type: integer, minimum: 0 }
+        location: { type: string }
+        id: { type: integer }
+    InventoryItem:
+      allOf:
+        - $ref: "#/components/schemas/InventoryInput"
+        - type: object
+          required: [id]
+          properties:
+            id: { type: integer }
+    Activity:
+      type: object
+      required: [id, action, detail, actor, createdAt, requestId]
+      properties:
+        id: { type: integer }
+        action: { type: string }
+        detail: { type: string }
+        actor: { type: string }
+        createdAt: { type: string }
+        requestId: { type: [integer, "null"] }
+    Settings:
+      type: object
+      required: [companyName, industry, currency]
+      properties:
+        companyName: { type: string, minLength: 1 }
+        industry: { type: string, minLength: 1 }
+        currency: { type: string, enum: [MYR, USD, SGD, GBP] }
+    Summary:
+      type: object
+      required: [activeRequests, pendingApprovals, inTransit, totalSpend, lowStock, delivered, savings]
+      properties:
+        activeRequests: { type: integer }
+        pendingApprovals: { type: integer }
+        inTransit: { type: integer }
+        totalSpend: { type: number }
+        lowStock: { type: integer }
+        delivered: { type: integer }
+        savings: { type: number }
+    Workspace:
+      type: object
+      required: [requests, suppliers, inventory, activity, settings, summary, demoMode, integrationNote]
+      properties:
+        requests:
+          type: array
+          items: { $ref: "#/components/schemas/PartRequest" }
+        suppliers:
+          type: array
+          items: { $ref: "#/components/schemas/Supplier" }
+        inventory:
+          type: array
+          items: { $ref: "#/components/schemas/InventoryItem" }
+        activity:
+          type: array
+          items: { $ref: "#/components/schemas/Activity" }
+        settings: { $ref: "#/components/schemas/Settings" }
+        summary: { $ref: "#/components/schemas/Summary" }
+        demoMode: { type: boolean }
+        integrationNote: { type: string }

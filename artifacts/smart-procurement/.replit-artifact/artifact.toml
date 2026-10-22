@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Smart Procurement System"
+description = "An SME procurement workspace for requesting parts, comparing suppliers, approving purchases and tracking delivery with a complete audit trail."
+version = "1.0.0"
+id = "artifacts/smart-procurement"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 24026
+
+[services.development]
+run = "pnpm --filter @workspace/smart-procurement run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/smart-procurement", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/smart-procurement/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24026"
+BASE_PATH = "/"
