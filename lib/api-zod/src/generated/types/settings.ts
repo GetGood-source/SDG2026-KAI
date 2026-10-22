@@ -12,4 +12,14 @@ export interface Settings {
   /** @minLength 1 */
   industry: string;
   currency: SettingsCurrency;
+  /**
+     * @minLength 2
+     * @maxLength 200
+     */
+  searchLocation?: string;
+  /**
+     * @minimum 1
+     * @maximum 200
+     */
+  searchRadiusKm?: number;
 }

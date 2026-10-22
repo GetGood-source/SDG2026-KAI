@@ -5,6 +5,22 @@ info:
 servers:
   - url: /api
 paths:
+  /procurement/requests/{id}/discovery/quote:
+    post:
+      operationId: confirmDiscoveredQuote
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DiscoveredQuoteInput" }
+      responses:
+        "201":
+          description: Supplier-confirmed quotation recorded from a discovered lead
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PartRequest" }
   /auth/me:
     get:
       operationId: getCurrentAccount
@@ -207,6 +223,62 @@ components:
             orderReference: { type: [string, "null"] }
             searchUrl: { type: string }
             inventoryAvailable: { type: integer }
+            discovery: { $ref: "#/components/schemas/SupplierDiscovery" }
+    SupplierCandidate:
+      type: object
+      required: [id, kind, name, title, address, phone, website, sourceUrl, distanceKm, rating, reviewCount, publishedPrice, priceCurrency, priceText, priceSourceUrl, snippet, score, reason]
+      properties:
+        id: { type: string }
+        kind: { type: string, enum: [nearby, web] }
+        name: { type: string }
+        title: { type: string }
+        address: { type: string }
+        phone: { type: string }
+        website: { type: string }
+        sourceUrl: { type: string }
+        distanceKm: { type: [number, "null"] }
+        rating: { type: [number, "null"] }
+        reviewCount: { type: [integer, "null"] }
+        publishedPrice: { type: [number, "null"] }
+        priceCurrency: { type: [string, "null"] }
+        priceText: { type: string }
+        priceSourceUrl: { type: string }
+        snippet: { type: string }
+        score: { type: number }
+        reason: { type: string }
+    SupplierDiscovery:
+      type: object
+      required: [searchId, status, query, location, radiusKm, centerLatitude, centerLongitude, fetchedAt, cacheUntil, candidates, recommendedCandidateId, preferredCandidateId, recommendation, note]
+      properties:
+        searchId: { type: string }
+        status: { type: string, enum: [searching, complete, partial, failed] }
+        query: { type: string }
+        location: { type: string }
+        radiusKm: { type: number }
+        centerLatitude: { type: [number, "null"] }
+        centerLongitude: { type: [number, "null"] }
+        fetchedAt: { type: string }
+        cacheUntil: { type: string }
+        candidates:
+          type: array
+          items: { $ref: "#/components/schemas/SupplierCandidate" }
+        recommendedCandidateId: { type: [string, "null"] }
+        preferredCandidateId: { type: [string, "null"] }
+        recommendation: { type: string }
+        note: { type: string }
+    DiscoveredQuoteInput:
+      type: object
+      required: [candidateId, supplierName, price, shipping, leadHours, available, rating, fitConfirmed, confirmationNote]
+      properties:
+        candidateId: { type: string, minLength: 1 }
+        supplierName: { type: string, minLength: 1 }
+        price: { type: number, minimum: 0.01 }
+        shipping: { type: number, minimum: 0 }
+        leadHours: { type: number, minimum: 0 }
+        available: { type: boolean }
+        rating: { type: number, minimum: 0, maximum: 5 }
+        fitConfirmed: { type: boolean }
+        confirmationNote: { type: string, minLength: 8 }
     QuoteInput:
       type: object
       required: [supplierId, price, shipping, leadHours, available, sourceUrl]
@@ -234,7 +306,8 @@ components:
       type: object
       required: [action]
       properties:
-        action: { type: string, enum: [source, recommend, select, approve, reject, order, deliver, follow_up] }
+        action: { type: string, enum: [source, discover, choose_candidate, recommend, select, approve, reject, order, deliver, follow_up] }
+        candidateId: { type: string }
         quoteId: { type: string }
         note: { type: string }
     SupplierInput:
@@ -289,6 +362,8 @@ components:
         companyName: { type: string, minLength: 1 }
         industry: { type: string, minLength: 1 }
         currency: { type: string, enum: [MYR, USD, SGD, GBP] }
+        searchLocation: { type: string, minLength: 2, maxLength: 200 }
+        searchRadiusKm: { type: integer, minimum: 1, maximum: 200 }
     Summary:
       type: object
       required: [activeRequests, pendingApprovals, inTransit, totalSpend, lowStock, delivered, savings]
@@ -320,3 +395,6 @@ components:
         summary: { $ref: "#/components/schemas/Summary" }
         demoMode: { type: boolean }
         integrationNote: { type: string }
+        liveSearchConfigured: { type: boolean }
+        liveSearchDailyLimit: { type: integer }
+        liveSearchUsedToday: { type: integer }

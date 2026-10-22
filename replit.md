@@ -14,7 +14,10 @@ An SME procurement MVP for requesting spare parts, comparing supplier quotations
 - Staff can create requests, source/record/select quotations, add suppliers, update stock, record approved orders and receive deliveries. Managers additionally approve/reject purchases, edit company settings and manage team access.
 - Team access is preauthorized by email. No invitation email is sent; managers share the app link separately.
 - Sample suppliers, ratings and quotations are marked Demo. New suppliers and quotes can be recorded manually.
-- Google search opens externally when recorded sourcing is insufficient. Automated Google result ingestion is not connected.
+- New requests automatically check exact part/model stock and catalog quotes. If stock is insufficient and no available recorded quote exists, Google Maps/Search discovery runs via server-side SerpApi.
+- Search defaults to Petaling Jaya, Selangor, Malaysia and 25 km; managers can change the search centre/radius. Distances are straight-line from the resolved search centre, not driving distance or exact workshop GPS.
+- Live leads retain source links, observation times, actual Google rating/review counts and nullable advertised prices. Web listings are separate from nearby results. Stock, fitment, seller identity and delivery remain unconfirmed; users must record a supplier-confirmed quote before manager approval.
+- Results cache for 15 minutes. Search runs are capped at 5/day in demo or 20/day otherwise (UTC); optional `LIVE_SUPPLIER_SEARCH_DAILY_LIMIT` overrides this, max 100. A run uses up to 7 provider requests. External network calls must not hold the workspace database lock.
 - Follow-ups are saved drafts with an email-client handoff, not automatically sent messages.
 - Purchase orders are recorded internally; no supplier order or payment is automatically submitted.
 - Delivery receipt updates inventory. Historical quote amounts are not converted when currency settings change; currency changes are blocked when quotes exist.

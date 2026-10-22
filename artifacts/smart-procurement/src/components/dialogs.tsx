@@ -42,15 +42,15 @@ export function NewRequestDialog({ open, onOpenChange, onCreated }: { open: bool
   const valid = f.partName && f.model && f.description && Number(f.quantity) >= 1 && f.neededBy;
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!valid) return;
+    if (!valid || m.isPending) return;
     const data: RequestInput = { ...f, quantity: Number(f.quantity), neededBy: new Date(f.neededBy).toISOString(), priority: f.priority as RequestInput["priority"] };
     m.mutate({ data }, {
       onSuccess: (r) => { inv(); toast({ title: `Request ${r.reference} logged` }); onOpenChange(false); onCreated?.(r.id); },
-      onError: (e) => toast({ title: "Could not create request", description: errMsg(e), variant: "destructive" }),
+      onError: (e) => toast({ title: "Could not create request", description: (e as { data?: { error?: string } })?.data?.error ?? errMsg(e), variant: "destructive" }),
     });
   };
   return (
-    <Shell open={open} onOpenChange={onOpenChange} title="New part request" desc="Step 1 of 5. Describe what is needed and by when.">
+    <Shell open={open} onOpenChange={(o) => { if (!m.isPending) onOpenChange(o); }} title="New part request" desc="Step 1 of 5. Describe what is needed and by when.">
       <form onSubmit={submit} className="grid grid-cols-2 gap-3">
         <div className="col-span-2"><Field label="Part name"><input className={inputCls} value={f.partName} onChange={set("partName")} placeholder="Front brake pads" data-testid="input-part-name" /></Field></div>
         <Field label="Vehicle / model"><input className={inputCls} value={f.model} onChange={set("model")} placeholder="Toyota Vios 2019" data-testid="input-model" /></Field>
@@ -63,9 +63,15 @@ export function NewRequestDialog({ open, onOpenChange, onCreated }: { open: bool
         </Field>
         <div className="col-span-2"><Field label="Requested by" hint="Taken from your verified account. Recorded by the server."><div className="flex items-center gap-2 rounded-md border bg-muted/60 px-3 py-2 text-sm" data-testid="text-requested-by"><span className="font-semibold">{account.name || account.email}</span><span className="text-xs text-muted-foreground">{account.email}</span></div></Field></div>
         <div className="col-span-2"><Field label="Description"><textarea rows={3} className={inputCls} value={f.description} onChange={set("description")} placeholder="Customer car on lift, OEM or equivalent acceptable" data-testid="input-description" /></Field></div>
+        {m.isPending && (
+          <div className="col-span-2 rise rounded-md border border-primary/30 bg-secondary/60 p-3 text-xs text-secondary-foreground" data-testid="text-sourcing-progress">
+            <div className="mb-1.5 font-semibold">Saving and sourcing. This can take up to 40 seconds.</div>
+            <div>Checking stock and recorded quotes, then searching Google live if neither covers the need. Please keep this open.</div>
+            <div className="mt-2 h-1 overflow-hidden rounded bg-muted"><div className="h-full w-1/3 bg-primary drift" /></div>
+          </div>)}
         <div className="col-span-2 flex justify-end gap-2 pt-1">
-          <Btn type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Btn>
-          <Btn type="submit" disabled={!valid || m.isPending} data-testid="button-submit-request">{m.isPending ? "Saving..." : "Log request"}</Btn>
+          <Btn type="button" variant="ghost" disabled={m.isPending} onClick={() => onOpenChange(false)}>Cancel</Btn>
+          <Btn type="submit" disabled={!valid || m.isPending} data-testid="button-submit-request">{m.isPending ? "Sourcing..." : "Log request"}</Btn>
         </div>
       </form>
     </Shell>

@@ -2,6 +2,7 @@ import { db, procurementWorkspace, teamMembers } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { seedState, type ProcurementState } from "./procurement-seed";
 import { accountContext } from "./account-context";
+import { DEFAULT_SEARCH_LOCATION, DEFAULT_SEARCH_RADIUS_KM } from "./supplier-search-evidence";
 
 export class ProcurementError extends Error {
   constructor(message: string, public status = 400) { super(message); }
@@ -21,6 +22,8 @@ export async function withWorkspace<T>(fn: (state: ProcurementState, tx: Transac
       }
     }
     const state = row.data as ProcurementState;
+    state.settings.searchLocation ??= DEFAULT_SEARCH_LOCATION;
+    state.settings.searchRadiusKm ??= DEFAULT_SEARCH_RADIUS_KM;
     const result = await fn(state, tx);
     await tx.update(procurementWorkspace).set({ data: state, updatedAt: new Date() }).where(eq(procurementWorkspace.id, 1));
     return result;

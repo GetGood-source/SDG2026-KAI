@@ -26,6 +26,7 @@ import type {
 import type {
   Account,
   ActionInput,
+  DiscoveredQuoteInput,
   HealthStatus,
   InventoryInput,
   InventoryItem,
@@ -66,6 +67,89 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   }
   return result;
 };
+
+export const getConfirmDiscoveredQuoteUrl = (id: number,) => {
+
+
+
+
+  return `/api/procurement/requests/${id}/discovery/quote`
+}
+
+export const confirmDiscoveredQuote = async (id: number,
+    discoveredQuoteInput: DiscoveredQuoteInput, options?: Parameters<typeof customFetch>[1]): Promise<PartRequest> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<PartRequest>(getConfirmDiscoveredQuoteUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(discoveredQuoteInput)
+  }
+);}
+
+
+
+
+
+export const getConfirmDiscoveredQuoteMutationKey = () => ['confirmDiscoveredQuote'] as const;
+
+export const getConfirmDiscoveredQuoteMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof confirmDiscoveredQuote>>, TError,ConfirmDiscoveredQuoteMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof confirmDiscoveredQuote>>, TError,ConfirmDiscoveredQuoteMutationVariables, TContext> => {
+
+const mutationKey = getConfirmDiscoveredQuoteMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof confirmDiscoveredQuote>>, ConfirmDiscoveredQuoteMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  confirmDiscoveredQuote(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ConfirmDiscoveredQuoteMutationResult = NonNullable<Awaited<ReturnType<typeof confirmDiscoveredQuote>>>
+    export type ConfirmDiscoveredQuoteMutationBody = BodyType<DiscoveredQuoteInput>
+    export type ConfirmDiscoveredQuoteMutationError = ErrorType<unknown>
+    export type ConfirmDiscoveredQuoteMutationVariables = {id: number;data: BodyType<DiscoveredQuoteInput>}
+
+    export const useConfirmDiscoveredQuote = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof confirmDiscoveredQuote>>, TError,ConfirmDiscoveredQuoteMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof confirmDiscoveredQuote>>,
+        TError,
+        ConfirmDiscoveredQuoteMutationVariables,
+        TContext
+      > => {
+      return useMutation(getConfirmDiscoveredQuoteMutationOptions(options), queryClient);
+    }
 
 export const getGetCurrentAccountUrl = () => {
 

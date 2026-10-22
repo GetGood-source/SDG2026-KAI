@@ -1,7 +1,10 @@
 import type { Workspace, PartRequest, Quote, QuoteInput } from "@workspace/api-zod";
 
 export type CatalogEntry = QuoteInput & { partName: string; model: string };
-export type ProcurementState = Workspace & { catalog: CatalogEntry[] };
+export type ProcurementState = Workspace & {
+  catalog: CatalogEntry[];
+  liveSearchBudget?: { date: string; count: number };
+};
 
 export function rankQuotes(request: PartRequest): void {
   const available = request.quotes.filter(q => q.available);
@@ -32,7 +35,7 @@ export function explainRecommendation(request: PartRequest): void {
 export function seedState(): ProcurementState {
   const now = Date.now();
   const state: ProcurementState = {
-    settings: { companyName: "AutoCare Workshop", industry: "Automotive", currency: "MYR" },
+    settings: { companyName: "AutoCare Workshop", industry: "Automotive", currency: "MYR", searchLocation: "Petaling Jaya, Selangor, Malaysia", searchRadiusKm: 25 },
     suppliers: [
       { id: 1, name: "AutoParts Direct", email: "sales@autoparts.example", category: "Automotive", rating: 4.8, leadHours: 6, location: "Petaling Jaya", isDemo: true },
       { id: 2, name: "MotorPro Supply", email: "sales@motorpro.example", category: "Automotive", rating: 4.6, leadHours: 24, location: "Shah Alam", isDemo: true },

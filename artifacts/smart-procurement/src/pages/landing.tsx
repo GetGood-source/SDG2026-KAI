@@ -4,7 +4,7 @@ import { ArrowRight, FileText, Search, Scale, ShieldCheck, Truck, Lock } from "l
 
 const STEPS = [
   { icon: FileText, t: "Request", d: "The bay logs the part, the vehicle and the hour it is needed." },
-  { icon: Search, t: "Source", d: "Stock is checked first, then supplier quotes you confirm by phone or page." },
+  { icon: Search, t: "Source", d: "Stock and recorded quotes are checked first. If nothing fits, live Google results are fetched as unconfirmed leads." },
   { icon: Scale, t: "Decide", d: "Price, rating and delivery time are weighed into one clear recommendation." },
   { icon: ShieldCheck, t: "Approve", d: "A manager signs off with a note before anything is bought." },
   { icon: Truck, t: "Receive", d: "Purchase orders and deliveries are tracked; stock updates itself." },
@@ -84,7 +84,7 @@ export default function Landing() {
           </div>
           <div className="text-sm leading-relaxed">
             <div className="font-semibold text-white">What it does not do</div>
-            <p className="mt-2">It does not email suppliers or place orders for you. Quotes are what you confirm yourself, and demo data is clearly labelled until you replace it.</p>
+            <p className="mt-2">It does not email suppliers or place orders for you. Live Google results (via SerpApi) are shown as unconfirmed leads with their source links; a quote only counts once a person records what the supplier confirmed. Demo data is clearly labelled until you replace it.</p>
           </div>
         </div>
       </section>

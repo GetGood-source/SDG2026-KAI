@@ -124,6 +124,71 @@ export type Quote = QuoteInput & {
   isDemo: boolean;
 };
 
+export type SupplierDiscoveryStatus = typeof SupplierDiscoveryStatus[keyof typeof SupplierDiscoveryStatus];
+
+
+export const SupplierDiscoveryStatus = {
+  searching: 'searching',
+  complete: 'complete',
+  partial: 'partial',
+  failed: 'failed',
+} as const;
+
+export type SupplierCandidateKind = typeof SupplierCandidateKind[keyof typeof SupplierCandidateKind];
+
+
+export const SupplierCandidateKind = {
+  nearby: 'nearby',
+  web: 'web',
+} as const;
+
+export interface SupplierCandidate {
+  id: string;
+  kind: SupplierCandidateKind;
+  name: string;
+  title: string;
+  address: string;
+  phone: string;
+  website: string;
+  sourceUrl: string;
+  /** @nullable */
+  distanceKm: number | null;
+  /** @nullable */
+  rating: number | null;
+  /** @nullable */
+  reviewCount: number | null;
+  /** @nullable */
+  publishedPrice: number | null;
+  /** @nullable */
+  priceCurrency: string | null;
+  priceText: string;
+  priceSourceUrl: string;
+  snippet: string;
+  score: number;
+  reason: string;
+}
+
+export interface SupplierDiscovery {
+  searchId: string;
+  status: SupplierDiscoveryStatus;
+  query: string;
+  location: string;
+  radiusKm: number;
+  /** @nullable */
+  centerLatitude: number | null;
+  /** @nullable */
+  centerLongitude: number | null;
+  fetchedAt: string;
+  cacheUntil: string;
+  candidates: SupplierCandidate[];
+  /** @nullable */
+  recommendedCandidateId: string | null;
+  /** @nullable */
+  preferredCandidateId: string | null;
+  recommendation: string;
+  note: string;
+}
+
 export type PartRequest = RequestInput & ({
   requestedBy: string;
   requestedById?: string;
@@ -140,13 +205,38 @@ export type PartRequest = RequestInput & ({
   orderReference: string | null;
   searchUrl: string;
   inventoryAvailable: number;
+  discovery?: SupplierDiscovery;
 });
+
+export interface DiscoveredQuoteInput {
+  /** @minLength 1 */
+  candidateId: string;
+  /** @minLength 1 */
+  supplierName: string;
+  /** @minimum 0.01 */
+  price: number;
+  /** @minimum 0 */
+  shipping: number;
+  /** @minimum 0 */
+  leadHours: number;
+  available: boolean;
+  /**
+     * @minimum 0
+     * @maximum 5
+     */
+  rating: number;
+  fitConfirmed: boolean;
+  /** @minLength 8 */
+  confirmationNote: string;
+}
 
 export type ActionInputAction = typeof ActionInputAction[keyof typeof ActionInputAction];
 
 
 export const ActionInputAction = {
   source: 'source',
+  discover: 'discover',
+  choose_candidate: 'choose_candidate',
   recommend: 'recommend',
   select: 'select',
   approve: 'approve',
@@ -158,6 +248,7 @@ export const ActionInputAction = {
 
 export interface ActionInput {
   action: ActionInputAction;
+  candidateId?: string;
   quoteId?: string;
   note?: string;
 }
@@ -226,6 +317,16 @@ export interface Settings {
   /** @minLength 1 */
   industry: string;
   currency: SettingsCurrency;
+  /**
+     * @minLength 2
+     * @maxLength 200
+     */
+  searchLocation?: string;
+  /**
+     * @minimum 1
+     * @maximum 200
+     */
+  searchRadiusKm?: number;
 }
 
 export interface Summary {
@@ -247,5 +348,8 @@ export interface Workspace {
   summary: Summary;
   demoMode: boolean;
   integrationNote: string;
+  liveSearchConfigured?: boolean;
+  liveSearchDailyLimit?: number;
+  liveSearchUsedToday?: number;
 }
 

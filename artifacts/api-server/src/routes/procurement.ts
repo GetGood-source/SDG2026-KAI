@@ -4,12 +4,14 @@ import {
   RequestActionParams, RequestActionBody, RequestActionResponse,
   AddQuoteParams, AddQuoteBody, AddQuoteResponse, CreateSupplierBody, CreateSupplierResponse,
   SaveInventoryBody, SaveInventoryResponse, SaveSettingsBody, SaveSettingsResponse,
+  ConfirmDiscoveredQuoteParams, ConfirmDiscoveredQuoteBody, ConfirmDiscoveredQuoteResponse,
   type PartRequest,
 } from "@workspace/api-zod";
 import { openai } from "@workspace/integrations-openai-ai-server";
 import { audit, refreshSummary, withWorkspace, ProcurementError } from "../lib/procurement-store";
 import { explainRecommendation, rankQuotes } from "../lib/procurement-seed";
 import { identifyAccount, requireMember, requireManager, requireSameOrigin } from "../middlewares/workspace-auth";
+import { dailySearchLimit, sourcePartRequest } from "../lib/procurement-sourcing";
 
 const router: IRouter = Router();
 router.use("/procurement", identifyAccount, requireMember, requireSameOrigin);
@@ -22,8 +24,11 @@ const editable = (r: PartRequest) => {
 router.get("/procurement/workspace", async (_req, res): Promise<void> => {
   const state = await withWorkspace(s => {
     s.integrationNote = process.env.PROCUREMENT_DEMO_MODE === "true"
-      ? "Open demo mode: employee and manager roles are simulated and can be changed by any visitor. Do not enter real or sensitive data. Sample suppliers and quotes are not live evidence. Google search opens externally; record verified quotes manually. Follow-ups are drafts, not sent emails. Purchase orders are tracked internally, not submitted to suppliers."
-      : "Verified staff and manager accounts protect this workspace. Managers control purchase approvals and team access. Sample suppliers, quotes and historical demo activity are not live evidence. Google search opens externally; record verified quotes manually. Follow-ups are drafts, not sent emails. Purchase orders are tracked internally, not submitted to suppliers.";
+      ? "Open demo mode: employee and manager roles are simulated and can be changed by any visitor. Do not enter sensitive data. Sample suppliers and quotes are not live evidence. Live Google discovery via SerpApi produces unconfirmed leads; record a supplier-confirmed quote before manager approval. Follow-ups are drafts, not sent emails. Purchase orders are tracked internally, not submitted to suppliers."
+      : "Verified staff and manager accounts protect this workspace. Managers control purchase approvals and team access. Sample suppliers and quotes are not live evidence. Live Google discovery via SerpApi produces unconfirmed leads; record a supplier-confirmed quote before manager approval. Follow-ups are drafts, not sent emails. Purchase orders are tracked internally, not submitted to suppliers.";
+    s.liveSearchConfigured = !!process.env.SERPAPI_API_KEY;
+    s.liveSearchDailyLimit = dailySearchLimit();
+    s.liveSearchUsedToday = s.liveSearchBudget?.date === new Date().toISOString().slice(0, 10) ? s.liveSearchBudget.count : 0;
     refreshSummary(s);
     return s;
   });
@@ -52,7 +57,45 @@ router.post("/procurement/requests", async (req, res): Promise<void> => {
     audit(s, "Request created", `${r.reference}: ${r.partName}, ${r.model}; ${r.quantity} unit(s), required ${r.neededBy}. ${r.description}`, id);
     return r;
   });
-  res.status(201).json(CreateRequestResponse.parse(created));
+  const sourced = await sourcePartRequest(created.id);
+  res.status(201).json(CreateRequestResponse.parse(sourced));
+});
+
+router.post("/procurement/requests/:id/discovery/quote", async (req, res): Promise<void> => {
+  const params = ConfirmDiscoveredQuoteParams.safeParse(req.params);
+  const parsed = ConfirmDiscoveredQuoteBody.safeParse(req.body);
+  if (!params.success || !parsed.success) { res.status(400).json({ error: "Enter the actual supplier, confirmed price, shipping, lead time, rating and confirmation note." }); return; }
+  const input = parsed.data;
+  if (!input.fitConfirmed || !input.supplierName.trim() || input.confirmationNote.trim().length < 8) {
+    res.status(400).json({ error: "Confirm exact fitment and enter the actual supplier's name plus a note describing how you confirmed this quote." }); return;
+  }
+  const updated = await withWorkspace(s => {
+    const r = s.requests.find(item => item.id === params.data.id);
+    if (!r) throw new ProcurementError("Request not found.", 404);
+    editable(r);
+    const candidate = r.discovery?.candidates.find(c => c.id === input.candidateId);
+    if (!candidate) throw new ProcurementError("This discovered lead is no longer available. Refresh the request and choose a current lead.", 404);
+    const rating = candidate.rating ?? input.rating;
+    let supplier = s.suppliers.find(item => !item.isDemo && normalize(item.name) === normalize(input.supplierName));
+    if (!supplier) {
+      supplier = { id: nextId(s.suppliers), name: input.supplierName.trim(), email: "", category: s.settings.industry, rating, leadHours: input.leadHours, location: candidate.address || "Online supplier; address not confirmed", isDemo: false };
+      s.suppliers.push(supplier);
+    }
+    const sourceUrl = candidate.priceSourceUrl || candidate.sourceUrl;
+    const duplicate = r.quotes.find(q => q.supplierId === supplier.id && q.sourceUrl === sourceUrl && q.price === input.price && q.shipping === input.shipping && q.leadHours === input.leadHours && q.available === input.available && q.rating === rating);
+    if (duplicate) return r;
+    r.quotes.push({
+      id: crypto.randomUUID(), supplierId: supplier.id, supplierName: supplier.name, price: input.price, shipping: input.shipping,
+      leadHours: input.leadHours, available: input.available, sourceUrl, rating, score: 0, total: 0, onTime: false, isDemo: false,
+    });
+    explainRecommendation(r);
+    r.status = r.quotes.some(q => q.available) ? "awaiting_approval" : "sourcing";
+    if (r.discovery) r.discovery.preferredCandidateId = candidate.id;
+    audit(s, "Discovered quotation confirmed",
+      `${r.reference}: ${supplier.name}. Human-recorded unit price ${input.price} ${s.settings.currency}, shipping ${input.shipping}, lead time ${input.leadHours} hours, available ${input.available}, exact fit confirmed. ${candidate.rating !== null ? `Google Maps rating ${rating}/5 (${candidate.reviewCount ?? "unknown"} reviews), observed ${r.discovery!.fetchedAt}.` : `Team-entered reliability rating ${rating}/5; not a Google review rating.`} Source: ${sourceUrl}. Confirmation: ${input.confirmationNote.trim()}. No supplier order or payment sent.`, r.id);
+    return r;
+  });
+  res.status(201).json(ConfirmDiscoveredQuoteResponse.parse(updated));
 });
 
 router.post("/procurement/requests/:id/quotes", async (req, res): Promise<void> => {
@@ -84,26 +127,23 @@ router.post("/procurement/requests/:id/action", async (req, res): Promise<void> 
   const params = RequestActionParams.safeParse(req.params);
   const parsed = RequestActionBody.safeParse(req.body);
   if (!params.success || !parsed.success) { res.status(400).json({ error: "Invalid action or request ID." }); return; }
-  const { action, quoteId, note } = parsed.data;
+  const { action, quoteId, note, candidateId } = parsed.data;
   if (["approve", "reject"].includes(action) && res.locals.account.role !== "manager") {
     res.status(403).json({ error: "Only a manager can approve or reject a purchase." }); return;
+  }
+  if (action === "source" || action === "discover") {
+    res.json(RequestActionResponse.parse(await sourcePartRequest(params.data.id, action === "discover")));
+    return;
   }
   const result = await withWorkspace(async s => {
     const r = s.requests.find(r => r.id === params.data.id);
     if (!r) throw new ProcurementError("Request not found.", 404);
-    if (action === "source") {
+    if (action === "choose_candidate") {
       editable(r);
-      r.inventoryAvailable = s.inventory.filter(i => normalize(i.partName) === normalize(r.partName) && normalize(i.model) === normalize(r.model)).reduce((n, i) => n + i.quantity, 0);
-      for (const entry of s.catalog.filter(c => normalize(c.partName) === normalize(r.partName) && normalize(c.model) === normalize(r.model))) {
-        if (r.quotes.some(q => q.supplierId === entry.supplierId)) continue;
-        const supplier = s.suppliers.find(i => i.id === entry.supplierId);
-        if (!supplier) continue;
-        const { partName: _part, model: _model, ...quote } = entry;
-        r.quotes.push({ ...quote, id: crypto.randomUUID(), supplierName: supplier.name, rating: supplier.rating, score: 0, total: 0, onTime: false, isDemo: supplier.isDemo });
-      }
-      explainRecommendation(r);
-      r.status = r.quotes.some(q => q.available) ? "awaiting_approval" : "sourcing";
-      audit(s, "Sourcing completed", `${r.reference}: ${r.inventoryAvailable} unit(s) in stock; ${r.quotes.length} recorded quotations. ${r.quotes.length ? "Sample catalog quotes are labeled Demo." : "No matching recorded suppliers; Google search is available. Add verified supplier quotes manually."}`, r.id, "Sourcing automation");
+      const candidate = r.discovery?.candidates.find(c => c.id === candidateId);
+      if (!candidate || !r.discovery) throw new ProcurementError("Choose an existing discovered supplier lead.", 404);
+      r.discovery.preferredCandidateId = candidate.id;
+      audit(s, "Supplier lead preferred", `${r.reference}: ${candidate.name}. Source: ${candidate.sourceUrl}. Preference only; fitment, price, stock and delivery must be confirmed before any approval.`, r.id);
     } else if (action === "recommend") {
       editable(r);
       explainRecommendation(r);
@@ -215,7 +255,7 @@ router.put("/procurement/settings", requireManager, async (req, res): Promise<vo
 router.use((err: unknown, req: import("express").Request, res: import("express").Response, _next: import("express").NextFunction) => {
   if (err instanceof ProcurementError) { res.status(err.status).json({ error: err.message }); return; }
   req.log.error({ err }, "Procurement operation failed");
-  res.status(502).json({ error: "Operation failed. No changes were saved. Please retry; rules-based recommendations remain available if AI is unavailable." });
+  res.status(502).json({ error: "Operation could not complete. Refresh to check the latest saved state before retrying. Rules-based recommendations remain available if AI is unavailable." });
 });
 
 export default router;

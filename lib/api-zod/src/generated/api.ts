@@ -7,6 +7,123 @@
 import * as zod from 'zod';
 
 
+export const ConfirmDiscoveredQuoteParams = zod.object({
+  "id": zod.coerce.number().int()
+})
+
+
+
+export const confirmDiscoveredQuoteBodyPriceMin = 0.01;
+
+export const confirmDiscoveredQuoteBodyShippingMin = 0;
+
+export const confirmDiscoveredQuoteBodyLeadHoursMin = 0;
+
+export const confirmDiscoveredQuoteBodyRatingMin = 0;
+export const confirmDiscoveredQuoteBodyRatingMax = 5;
+
+export const confirmDiscoveredQuoteBodyConfirmationNoteMin = 8;
+
+
+
+export const ConfirmDiscoveredQuoteBody = zod.object({
+  "candidateId": zod.string().min(1),
+  "supplierName": zod.string().min(1),
+  "price": zod.number().min(confirmDiscoveredQuoteBodyPriceMin),
+  "shipping": zod.number().min(confirmDiscoveredQuoteBodyShippingMin),
+  "leadHours": zod.number().min(confirmDiscoveredQuoteBodyLeadHoursMin),
+  "available": zod.boolean(),
+  "rating": zod.number().min(confirmDiscoveredQuoteBodyRatingMin).max(confirmDiscoveredQuoteBodyRatingMax),
+  "fitConfirmed": zod.boolean(),
+  "confirmationNote": zod.string().min(confirmDiscoveredQuoteBodyConfirmationNoteMin)
+})
+
+
+
+
+
+export const confirmDiscoveredQuoteResponseTwoQuotesItemOnePriceMin = 0.01;
+
+export const confirmDiscoveredQuoteResponseTwoQuotesItemOneShippingMin = 0;
+
+export const confirmDiscoveredQuoteResponseTwoQuotesItemOneLeadHoursMin = 0;
+
+
+
+export const ConfirmDiscoveredQuoteResponse = zod.object({
+  "partName": zod.string().min(1),
+  "model": zod.string().min(1),
+  "neededBy": zod.string(),
+  "description": zod.string().min(1),
+  "quantity": zod.number().int().min(1),
+  "priority": zod.enum(['normal', 'urgent', 'critical'])
+}).and(zod.object({
+  "requestedBy": zod.string(),
+  "requestedById": zod.string().optional(),
+  "id": zod.number().int(),
+  "reference": zod.string(),
+  "status": zod.enum(['new', 'sourcing', 'awaiting_approval', 'approved', 'ordered', 'delivered', 'rejected']),
+  "createdAt": zod.string(),
+  "quotes": zod.array(zod.object({
+  "supplierId": zod.number().int(),
+  "price": zod.number().min(confirmDiscoveredQuoteResponseTwoQuotesItemOnePriceMin),
+  "shipping": zod.number().min(confirmDiscoveredQuoteResponseTwoQuotesItemOneShippingMin),
+  "leadHours": zod.number().min(confirmDiscoveredQuoteResponseTwoQuotesItemOneLeadHoursMin),
+  "available": zod.boolean(),
+  "sourceUrl": zod.string()
+}).and(zod.object({
+  "id": zod.string(),
+  "supplierName": zod.string(),
+  "rating": zod.number(),
+  "score": zod.number(),
+  "total": zod.number(),
+  "onTime": zod.boolean(),
+  "isDemo": zod.boolean()
+}))),
+  "recommendation": zod.string(),
+  "recommendationMode": zod.string(),
+  "selectedQuoteId": zod.string().nullable(),
+  "orderReference": zod.string().nullable(),
+  "searchUrl": zod.string(),
+  "inventoryAvailable": zod.number().int(),
+  "discovery": zod.object({
+  "searchId": zod.string(),
+  "status": zod.enum(['searching', 'complete', 'partial', 'failed']),
+  "query": zod.string(),
+  "location": zod.string(),
+  "radiusKm": zod.number(),
+  "centerLatitude": zod.number().nullable(),
+  "centerLongitude": zod.number().nullable(),
+  "fetchedAt": zod.string(),
+  "cacheUntil": zod.string(),
+  "candidates": zod.array(zod.object({
+  "id": zod.string(),
+  "kind": zod.enum(['nearby', 'web']),
+  "name": zod.string(),
+  "title": zod.string(),
+  "address": zod.string(),
+  "phone": zod.string(),
+  "website": zod.string(),
+  "sourceUrl": zod.string(),
+  "distanceKm": zod.number().nullable(),
+  "rating": zod.number().nullable(),
+  "reviewCount": zod.number().int().nullable(),
+  "publishedPrice": zod.number().nullable(),
+  "priceCurrency": zod.string().nullable(),
+  "priceText": zod.string(),
+  "priceSourceUrl": zod.string(),
+  "snippet": zod.string(),
+  "score": zod.number(),
+  "reason": zod.string()
+})),
+  "recommendedCandidateId": zod.string().nullable(),
+  "preferredCandidateId": zod.string().nullable(),
+  "recommendation": zod.string(),
+  "note": zod.string()
+}).optional()
+}))
+
+
 export const GetCurrentAccountResponse = zod.object({
   "userId": zod.string(),
   "name": zod.string(),
@@ -75,6 +192,11 @@ export const getWorkspaceResponseInventoryItemOneMinimumMin = 0;
 
 
 
+export const getWorkspaceResponseSettingsSearchLocationMin = 2;
+export const getWorkspaceResponseSettingsSearchLocationMax = 200;
+
+export const getWorkspaceResponseSettingsSearchRadiusKmMax = 200;
+
 
 
 export const GetWorkspaceResponse = zod.object({
@@ -113,7 +235,42 @@ export const GetWorkspaceResponse = zod.object({
   "selectedQuoteId": zod.string().nullable(),
   "orderReference": zod.string().nullable(),
   "searchUrl": zod.string(),
-  "inventoryAvailable": zod.number().int()
+  "inventoryAvailable": zod.number().int(),
+  "discovery": zod.object({
+  "searchId": zod.string(),
+  "status": zod.enum(['searching', 'complete', 'partial', 'failed']),
+  "query": zod.string(),
+  "location": zod.string(),
+  "radiusKm": zod.number(),
+  "centerLatitude": zod.number().nullable(),
+  "centerLongitude": zod.number().nullable(),
+  "fetchedAt": zod.string(),
+  "cacheUntil": zod.string(),
+  "candidates": zod.array(zod.object({
+  "id": zod.string(),
+  "kind": zod.enum(['nearby', 'web']),
+  "name": zod.string(),
+  "title": zod.string(),
+  "address": zod.string(),
+  "phone": zod.string(),
+  "website": zod.string(),
+  "sourceUrl": zod.string(),
+  "distanceKm": zod.number().nullable(),
+  "rating": zod.number().nullable(),
+  "reviewCount": zod.number().int().nullable(),
+  "publishedPrice": zod.number().nullable(),
+  "priceCurrency": zod.string().nullable(),
+  "priceText": zod.string(),
+  "priceSourceUrl": zod.string(),
+  "snippet": zod.string(),
+  "score": zod.number(),
+  "reason": zod.string()
+})),
+  "recommendedCandidateId": zod.string().nullable(),
+  "preferredCandidateId": zod.string().nullable(),
+  "recommendation": zod.string(),
+  "note": zod.string()
+}).optional()
 }))),
   "suppliers": zod.array(zod.object({
   "name": zod.string().min(1),
@@ -147,7 +304,9 @@ export const GetWorkspaceResponse = zod.object({
   "settings": zod.object({
   "companyName": zod.string().min(1),
   "industry": zod.string().min(1),
-  "currency": zod.enum(['MYR', 'USD', 'SGD', 'GBP'])
+  "currency": zod.enum(['MYR', 'USD', 'SGD', 'GBP']),
+  "searchLocation": zod.string().min(getWorkspaceResponseSettingsSearchLocationMin).max(getWorkspaceResponseSettingsSearchLocationMax).optional(),
+  "searchRadiusKm": zod.number().int().min(1).max(getWorkspaceResponseSettingsSearchRadiusKmMax).optional()
 }),
   "summary": zod.object({
   "activeRequests": zod.number().int(),
@@ -159,7 +318,10 @@ export const GetWorkspaceResponse = zod.object({
   "savings": zod.number()
 }),
   "demoMode": zod.boolean(),
-  "integrationNote": zod.string()
+  "integrationNote": zod.string(),
+  "liveSearchConfigured": zod.boolean().optional(),
+  "liveSearchDailyLimit": zod.number().int().optional(),
+  "liveSearchUsedToday": zod.number().int().optional()
 })
 
 
@@ -225,7 +387,42 @@ export const CreateRequestResponse = zod.object({
   "selectedQuoteId": zod.string().nullable(),
   "orderReference": zod.string().nullable(),
   "searchUrl": zod.string(),
-  "inventoryAvailable": zod.number().int()
+  "inventoryAvailable": zod.number().int(),
+  "discovery": zod.object({
+  "searchId": zod.string(),
+  "status": zod.enum(['searching', 'complete', 'partial', 'failed']),
+  "query": zod.string(),
+  "location": zod.string(),
+  "radiusKm": zod.number(),
+  "centerLatitude": zod.number().nullable(),
+  "centerLongitude": zod.number().nullable(),
+  "fetchedAt": zod.string(),
+  "cacheUntil": zod.string(),
+  "candidates": zod.array(zod.object({
+  "id": zod.string(),
+  "kind": zod.enum(['nearby', 'web']),
+  "name": zod.string(),
+  "title": zod.string(),
+  "address": zod.string(),
+  "phone": zod.string(),
+  "website": zod.string(),
+  "sourceUrl": zod.string(),
+  "distanceKm": zod.number().nullable(),
+  "rating": zod.number().nullable(),
+  "reviewCount": zod.number().int().nullable(),
+  "publishedPrice": zod.number().nullable(),
+  "priceCurrency": zod.string().nullable(),
+  "priceText": zod.string(),
+  "priceSourceUrl": zod.string(),
+  "snippet": zod.string(),
+  "score": zod.number(),
+  "reason": zod.string()
+})),
+  "recommendedCandidateId": zod.string().nullable(),
+  "preferredCandidateId": zod.string().nullable(),
+  "recommendation": zod.string(),
+  "note": zod.string()
+}).optional()
 }))
 
 
@@ -234,7 +431,8 @@ export const RequestActionParams = zod.object({
 })
 
 export const RequestActionBody = zod.object({
-  "action": zod.enum(['source', 'recommend', 'select', 'approve', 'reject', 'order', 'deliver', 'follow_up']),
+  "action": zod.enum(['source', 'discover', 'choose_candidate', 'recommend', 'select', 'approve', 'reject', 'order', 'deliver', 'follow_up']),
+  "candidateId": zod.string().optional(),
   "quoteId": zod.string().optional(),
   "note": zod.string().optional()
 })
@@ -286,7 +484,42 @@ export const RequestActionResponse = zod.object({
   "selectedQuoteId": zod.string().nullable(),
   "orderReference": zod.string().nullable(),
   "searchUrl": zod.string(),
-  "inventoryAvailable": zod.number().int()
+  "inventoryAvailable": zod.number().int(),
+  "discovery": zod.object({
+  "searchId": zod.string(),
+  "status": zod.enum(['searching', 'complete', 'partial', 'failed']),
+  "query": zod.string(),
+  "location": zod.string(),
+  "radiusKm": zod.number(),
+  "centerLatitude": zod.number().nullable(),
+  "centerLongitude": zod.number().nullable(),
+  "fetchedAt": zod.string(),
+  "cacheUntil": zod.string(),
+  "candidates": zod.array(zod.object({
+  "id": zod.string(),
+  "kind": zod.enum(['nearby', 'web']),
+  "name": zod.string(),
+  "title": zod.string(),
+  "address": zod.string(),
+  "phone": zod.string(),
+  "website": zod.string(),
+  "sourceUrl": zod.string(),
+  "distanceKm": zod.number().nullable(),
+  "rating": zod.number().nullable(),
+  "reviewCount": zod.number().int().nullable(),
+  "publishedPrice": zod.number().nullable(),
+  "priceCurrency": zod.string().nullable(),
+  "priceText": zod.string(),
+  "priceSourceUrl": zod.string(),
+  "snippet": zod.string(),
+  "score": zod.number(),
+  "reason": zod.string()
+})),
+  "recommendedCandidateId": zod.string().nullable(),
+  "preferredCandidateId": zod.string().nullable(),
+  "recommendation": zod.string(),
+  "note": zod.string()
+}).optional()
 }))
 
 
@@ -358,7 +591,42 @@ export const AddQuoteResponse = zod.object({
   "selectedQuoteId": zod.string().nullable(),
   "orderReference": zod.string().nullable(),
   "searchUrl": zod.string(),
-  "inventoryAvailable": zod.number().int()
+  "inventoryAvailable": zod.number().int(),
+  "discovery": zod.object({
+  "searchId": zod.string(),
+  "status": zod.enum(['searching', 'complete', 'partial', 'failed']),
+  "query": zod.string(),
+  "location": zod.string(),
+  "radiusKm": zod.number(),
+  "centerLatitude": zod.number().nullable(),
+  "centerLongitude": zod.number().nullable(),
+  "fetchedAt": zod.string(),
+  "cacheUntil": zod.string(),
+  "candidates": zod.array(zod.object({
+  "id": zod.string(),
+  "kind": zod.enum(['nearby', 'web']),
+  "name": zod.string(),
+  "title": zod.string(),
+  "address": zod.string(),
+  "phone": zod.string(),
+  "website": zod.string(),
+  "sourceUrl": zod.string(),
+  "distanceKm": zod.number().nullable(),
+  "rating": zod.number().nullable(),
+  "reviewCount": zod.number().int().nullable(),
+  "publishedPrice": zod.number().nullable(),
+  "priceCurrency": zod.string().nullable(),
+  "priceText": zod.string(),
+  "priceSourceUrl": zod.string(),
+  "snippet": zod.string(),
+  "score": zod.number(),
+  "reason": zod.string()
+})),
+  "recommendedCandidateId": zod.string().nullable(),
+  "preferredCandidateId": zod.string().nullable(),
+  "recommendation": zod.string(),
+  "note": zod.string()
+}).optional()
 }))
 
 
@@ -441,22 +709,36 @@ export const SaveInventoryResponse = zod.object({
 
 
 
+export const saveSettingsBodySearchLocationMin = 2;
+export const saveSettingsBodySearchLocationMax = 200;
+
+export const saveSettingsBodySearchRadiusKmMax = 200;
+
 
 
 export const SaveSettingsBody = zod.object({
   "companyName": zod.string().min(1),
   "industry": zod.string().min(1),
-  "currency": zod.enum(['MYR', 'USD', 'SGD', 'GBP'])
+  "currency": zod.enum(['MYR', 'USD', 'SGD', 'GBP']),
+  "searchLocation": zod.string().min(saveSettingsBodySearchLocationMin).max(saveSettingsBodySearchLocationMax).optional(),
+  "searchRadiusKm": zod.number().int().min(1).max(saveSettingsBodySearchRadiusKmMax).optional()
 })
 
 
+
+export const saveSettingsResponseSearchLocationMin = 2;
+export const saveSettingsResponseSearchLocationMax = 200;
+
+export const saveSettingsResponseSearchRadiusKmMax = 200;
 
 
 
 export const SaveSettingsResponse = zod.object({
   "companyName": zod.string().min(1),
   "industry": zod.string().min(1),
-  "currency": zod.enum(['MYR', 'USD', 'SGD', 'GBP'])
+  "currency": zod.enum(['MYR', 'USD', 'SGD', 'GBP']),
+  "searchLocation": zod.string().min(saveSettingsResponseSearchLocationMin).max(saveSettingsResponseSearchLocationMax).optional(),
+  "searchRadiusKm": zod.number().int().min(1).max(saveSettingsResponseSearchRadiusKmMax).optional()
 })
 
 

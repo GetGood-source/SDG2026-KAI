@@ -10,6 +10,8 @@ export type ActionInputAction = typeof ActionInputAction[keyof typeof ActionInpu
 
 export const ActionInputAction = {
   source: 'source',
+  discover: 'discover',
+  choose_candidate: 'choose_candidate',
   recommend: 'recommend',
   select: 'select',
   approve: 'approve',

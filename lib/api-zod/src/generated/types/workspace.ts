@@ -20,4 +20,7 @@ export interface Workspace {
   summary: Summary;
   demoMode: boolean;
   integrationNote: string;
+  liveSearchConfigured?: boolean;
+  liveSearchDailyLimit?: number;
+  liveSearchUsedToday?: number;
 }

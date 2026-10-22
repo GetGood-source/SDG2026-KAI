@@ -7,6 +7,7 @@
 import type { PartRequestStatus } from './partRequestStatus';
 import type { Quote } from './quote';
 import type { RequestInput } from './requestInput';
+import type { SupplierDiscovery } from './supplierDiscovery';
 
 export type PartRequest = RequestInput & ({
   requestedBy: string;
@@ -24,4 +25,5 @@ export type PartRequest = RequestInput & ({
   orderReference: string | null;
   searchUrl: string;
   inventoryAvailable: number;
+  discovery?: SupplierDiscovery;
 });

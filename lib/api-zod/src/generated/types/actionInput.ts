@@ -8,6 +8,7 @@ import type { ActionInputAction } from './actionInputAction';
 
 export interface ActionInput {
   action: ActionInputAction;
+  candidateId?: string;
   quoteId?: string;
   note?: string;
 }

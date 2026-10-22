@@ -6,6 +6,7 @@ import type { ActionInput, Supplier } from "@workspace/api-client-react";
 import { useWorkspace, useInvalidateWorkspace, money, fmtDate, deadlineLabel, hoursUntil, selectedQuote, STATUS } from "@/lib/proc";
 import { Panel, StatusPill, PriorityPill, DemoBadge, LoadingRows, ErrorState, Btn, inputCls } from "@/components/kit";
 import { QuoteDialog, SupplierDialog } from "@/components/dialogs";
+import { DiscoveryPanel, apiErr } from "@/components/discovery";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useAccount } from "@/lib/account";
@@ -58,10 +59,10 @@ export default function RequestDetail() {
   const approved = ["approved", "ordered", "delivered"].includes(r.status);
 
   const run = (input: ActionInput, ok: string, after?: (res: typeof r) => void) => {
-    setPending(input.action + (input.quoteId ?? ""));
+    setPending(input.action + (input.quoteId ?? input.candidateId ?? ""));
     act.mutate({ id: r.id, data: input }, {
       onSuccess: (res) => { inv(); toast({ title: ok }); after?.(res); },
-      onError: (e) => toast({ title: "Action failed", description: e instanceof Error ? e.message : "", variant: "destructive" }),
+      onError: (e) => toast({ title: "Action failed", description: apiErr(e), variant: "destructive" }),
       onSettled: () => setPending(null),
     });
   };
@@ -112,7 +113,7 @@ export default function RequestDetail() {
           <Step n={2} title="Connected data: stock and supplier quotes" state={stepState(2)}>
             <div className="mb-3 flex flex-wrap items-center gap-2">
               <Btn onClick={() => run({ action: "source" }, "Stock and recorded quotes checked")} disabled={busy("source") || ["ordered", "delivered", "rejected"].includes(r.status)} data-testid="button-source">
-                <Search className="h-4 w-4" />{busy("source") ? "Checking..." : "Check stock and quotes"}
+                <Search className="h-4 w-4" />{busy("source") ? "Checking, may search live..." : "Check stock and quotes"}
               </Btn>
               <Btn variant="outline" onClick={() => { setPreset(undefined); setQuoteOpen(true); }} disabled={!data.suppliers.length} data-testid="button-add-quote"><Plus className="h-4 w-4" />Manual verified quote</Btn>
               <Btn variant="outline" onClick={() => setSupOpen(true)} data-testid="button-add-supplier"><Plus className="h-4 w-4" />External supplier</Btn>
@@ -157,6 +158,7 @@ export default function RequestDetail() {
                 </table>
               </div>
             )}
+            <DiscoveryPanel r={r} searchUrl={r.searchUrl} busy={busy} run={(action, ok, candidateId) => run(candidateId ? { action, candidateId } : { action }, ok)} />
           </Step>
 
           <Step n={3} title="Decision: transparent scoring" state={stepState(3)}>
@@ -169,7 +171,7 @@ export default function RequestDetail() {
               <div className="rounded-md border-l-4 border-primary bg-secondary/60 p-3 text-sm" data-testid="text-recommendation">
                 <div className="mb-1 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-primary"><Sparkles className="h-3 w-3" />Explanation ({r.recommendationMode})</div>
                 <p className="whitespace-pre-line">{r.recommendation}</p>
-                <p className="mt-2 text-[11px] text-muted-foreground">Ranking is computed by the fixed formula above. The text only explains it; a person still makes the selection.</p>
+                <p className="mt-2 text-[11px] text-muted-foreground">Applies to recorded quotes only; online leads are ranked separately above. Ranking is computed by the fixed formula above. The text only explains it; a person still makes the selection.</p>
               </div>
             ) : <p className="text-sm text-muted-foreground">Generate an explanation of the ranking once at least one available quote is recorded.</p>}
             <div className="mt-3 flex flex-wrap gap-2">
