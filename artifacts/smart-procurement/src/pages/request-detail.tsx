@@ -55,6 +55,8 @@ export default function RequestDetail() {
   const hasRec = !!r.recommendation;
   const sorted = [...r.quotes].sort((a, b) => Number(b.available) - Number(a.available) || b.score - a.score);
   const best = sorted.find((q) => q.available);
+  const bestLead = best && r.discovery?.candidates.find(candidate => best.sourceUrl === (candidate.priceSourceUrl || candidate.sourceUrl));
+  const bestNeedsLeadPreference = !!bestLead && r.discovery?.preferredCandidateId !== bestLead.id;
   const decided = ["awaiting_approval", "approved", "ordered", "delivered"].includes(r.status) || (r.status === "rejected" && !!sq);
   const approved = ["approved", "ordered", "delivered"].includes(r.status);
 
@@ -71,7 +73,7 @@ export default function RequestDetail() {
   const stepState = (n: number): "done" | "current" | "locked" => {
     if (r.status === "delivered") return "done";
     if (r.status === "rejected") return n <= 4 ? "done" : "locked";
-    const cur = r.status === "new" ? 2 : r.status === "sourcing" ? (r.quotes.length ? 3 : 2) : stage;
+    const cur = r.status === "new" ? 2 : r.status === "sourcing" ? (r.quotes.length && r.selectedQuoteId ? 3 : 2) : stage;
     return n < cur ? "done" : n === cur ? "current" : "locked";
   };
 
@@ -137,7 +139,10 @@ export default function RequestDetail() {
                     {["Supplier", "Price", "Ship", "Total", "Lead", "Rating", "Score", ""].map((h) => <th key={h} className="px-2 py-1.5 font-semibold">{h}</th>)}
                   </tr></thead>
                   <tbody className="divide-y divide-border">
-                    {sorted.map((q) => (
+                    {sorted.map((q) => {
+                      const lead = r.discovery?.candidates.find(candidate => q.sourceUrl === (candidate.priceSourceUrl || candidate.sourceUrl));
+                      const needsLeadPreference = !!lead && r.discovery?.preferredCandidateId !== lead.id;
+                      return (
                       <tr key={q.id} className={cn("transition", !q.available && "text-muted-foreground line-through decoration-muted-foreground/40", q.id === r.selectedQuoteId && "bg-secondary")} data-testid={`row-quote-${q.id}`}>
                         <td className="px-2 py-2 no-underline">
                           <div className="flex items-center gap-1.5 font-semibold">{q.supplierName}{q.isDemo && <DemoBadge />}{q.id === best?.id && <span className="rounded bg-primary px-1.5 text-[10px] font-bold uppercase text-white">Top score</span>}</div>
@@ -151,9 +156,11 @@ export default function RequestDetail() {
                         <td className="px-2"><div className="flex items-center gap-1.5"><div className="h-1.5 w-12 overflow-hidden rounded bg-muted"><div className="h-full bg-primary" style={{ width: `${Math.min(100, q.score)}%` }} /></div><span className="num text-xs">{q.score.toFixed(1)}</span></div></td>
                         <td className="px-2 text-right">
                           {q.id === r.selectedQuoteId ? <span className="text-xs font-bold text-primary">Selected</span> :
-                            <Btn variant="outline" className="px-2 py-1 text-xs" disabled={!q.available || approved || r.status === "rejected" || busy("select" + q.id)} onClick={() => run({ action: "select", quoteId: q.id }, `${q.supplierName} selected, sent for approval`)} data-testid={`button-select-${q.id}`}>Select</Btn>}
+                            <Btn variant="outline" className="px-2 py-1 text-xs" disabled={!q.available || needsLeadPreference || approved || r.status === "rejected" || busy("select" + q.id)} onClick={() => run({ action: "select", quoteId: q.id }, `${q.supplierName} selected, sent for approval`)} data-testid={`button-select-${q.id}`}>{needsLeadPreference ? "Prefer lead first" : "Select"}</Btn>}
                         </td>
-                      </tr>))}
+                      </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -178,7 +185,7 @@ export default function RequestDetail() {
               <Btn variant={hasRec ? "outline" : "primary"} onClick={() => run({ action: "recommend" }, "Recommendation generated")} disabled={!r.quotes.some((q) => q.available) || busy("recommend") || approved} data-testid="button-recommend">
                 <Sparkles className="h-4 w-4" />{busy("recommend") ? "Scoring..." : hasRec ? "Re-explain" : "Explain ranking"}
               </Btn>
-              {best && !decided && <Btn onClick={() => run({ action: "select", quoteId: best.id }, "Top-scoring quote selected")} disabled={busy("select" + best.id)} data-testid="button-select-best">Select {best.supplierName} ({money(best.total, cur)})</Btn>}
+              {best && !decided && <Btn onClick={() => run({ action: "select", quoteId: best.id }, "Top-scoring quote selected")} disabled={bestNeedsLeadPreference || busy("select" + best.id)} data-testid="button-select-best">{bestNeedsLeadPreference ? `Prefer ${bestLead?.name} first` : `Select ${best.supplierName} (${money(best.total, cur)})`}</Btn>}
             </div>
           </Step>
 

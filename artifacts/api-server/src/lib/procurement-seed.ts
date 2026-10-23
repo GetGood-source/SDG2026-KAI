@@ -19,11 +19,11 @@ export function rankQuotes(request: PartRequest): void {
   request.quotes.sort((a, b) => b.score - a.score || a.total - b.total);
 }
 
-export function explainRecommendation(request: PartRequest): void {
+export function explainRecommendation(request: PartRequest, selectWinner = true): void {
   rankQuotes(request);
   const eligible = request.quotes.filter(q => q.available);
   const winner = eligible[0];
-  request.selectedQuoteId = winner?.id ?? null;
+  if (selectWinner) request.selectedQuoteId = winner?.id ?? null;
   request.recommendationMode = "rules";
   if (!winner) {
     request.recommendation = "No available recorded quote matches this exact part and model. Search Google for external suppliers and record a confirmed quotation before requesting approval. No prices or ratings have been guessed.";

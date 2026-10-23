@@ -81,14 +81,15 @@ export function DiscoveryPanel({ r, run, busy, searchUrl }: { r: PartRequest; ru
   const nearby = d?.candidates.filter((c) => c.kind === "nearby") ?? [];
   const web = d?.candidates.filter((c) => c.kind === "web") ?? [];
   const preferred = d?.candidates.find((c) => c.id === d.preferredCandidateId);
-  const preferredQuote = preferred && r.quotes.find(q => q.sourceUrl === (preferred.priceSourceUrl || preferred.sourceUrl));
+  const preferredQuote = preferred && [...r.quotes].reverse().find(q => q.sourceUrl === (preferred.priceSourceUrl || preferred.sourceUrl));
+  const preferredQuoteSelected = !!preferredQuote && preferredQuote.available && preferredQuote.id === r.selectedQuoteId;
 
   const list = (items: SupplierCandidate[]) => (
     <ul className="space-y-2">
       {items.map((c, i) => (
         <div key={c.id} className="rise" style={{ animationDelay: `${i * 40}ms` }}>
           <CandidateRow c={c} d={d!} canAct={!closed} locked={closed} choosing={busy("choose_candidate" + c.id)}
-            onChoose={() => run("choose_candidate", `${c.name} set as preferred lead. Confirm a quote before it can be approved.`, c.id)}
+            onChoose={() => run("choose_candidate", `${c.name} preferred. Any available confirmed quote from this lead is selected; otherwise record one before approval.`, c.id)}
             onConfirm={() => setConfirming(c)} />
         </div>))}
     </ul>
@@ -123,8 +124,9 @@ export function DiscoveryPanel({ r, run, busy, searchUrl }: { r: PartRequest; ru
           {d.recommendation && <div className="mb-2 rounded-md border-l-4 border-primary bg-card p-2.5 text-xs" data-testid="text-discovery-recommendation"><div className="mb-0.5 text-[10px] font-bold uppercase tracking-wider text-primary">Server lead ranking (separate from quote scoring)</div><p className="whitespace-pre-line">{d.recommendation}</p></div>}
           {preferred && (
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2 rounded-md border border-dashed border-primary bg-card px-3 py-2 text-xs" data-testid="text-preferred-lead">
-              <span><Crosshair className="mr-1 inline h-3.5 w-3.5 text-primary" />Preferred source lead: <b>{preferred.name}</b>. {preferredQuote ? `Recorded quote on file from ${preferredQuote.supplierName}; see the quote and approval steps.` : "Not approvable until a confirmed quote is recorded."}</span>
-              {!closed && !preferredQuote && <Btn className="px-2 py-1 text-xs" onClick={() => setConfirming(preferred)} data-testid="button-confirm-preferred"><ClipboardCheck className="h-3 w-3" />Record confirmed quote</Btn>}
+              <span><Crosshair className="mr-1 inline h-3.5 w-3.5 text-primary" />Preferred source lead: <b>{preferred.name}</b>. {preferredQuote ? preferredQuote.available ? preferredQuoteSelected ? `Confirmed quote from ${preferredQuote.supplierName} is selected for manager approval.` : `A confirmed quote from ${preferredQuote.supplierName} is on file but not selected.` : `The recorded quote from ${preferredQuote.supplierName} is unavailable.` : "No confirmed quote is on file; this lead cannot be sent for approval yet."}</span>
+              {!closed && preferredQuote?.available && !preferredQuoteSelected && <Btn variant="outline" className="px-2 py-1 text-xs" onClick={() => run("choose_candidate", `${preferred.name} selected for manager review.`, preferred.id)} data-testid="button-select-preferred-quote"><Crosshair className="h-3 w-3" />Select preferred quote</Btn>}
+              {!closed && (!preferredQuote || !preferredQuote.available) && <Btn className="px-2 py-1 text-xs" onClick={() => setConfirming(preferred)} data-testid="button-confirm-preferred"><ClipboardCheck className="h-3 w-3" />Record confirmed quote</Btn>}
             </div>)}
 
           <div className="mb-1.5 mt-3 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground"><MapPin className="h-3 w-3" />Nearby on Google Maps ({nearby.length})</div>
@@ -169,7 +171,21 @@ function ConfirmQuoteDialog({ requestId, c, onClose }: { requestId: number; c: S
     if (!valid || m.isPending) return;
     setErr(null);
     m.mutate({ id: requestId, data: { candidateId: c.id, supplierName: f.supplierName.trim(), price: Number(f.price), shipping: Number(f.shipping), leadHours: Number(f.leadHours), available: f.available, rating, fitConfirmed: f.fitConfirmed, confirmationNote: f.confirmationNote.trim() } }, {
-      onSuccess: (res) => { inv(); toast({ title: `Confirmed quote recorded for ${res.reference}`, description: res.status === "awaiting_approval" ? "Ready for manager approval." : "Unavailable quote retained; continue sourcing." }); onClose(); },
+      onSuccess: (res) => {
+        inv();
+        const sourceUrl = c.priceSourceUrl || c.sourceUrl;
+        const matchingQuote = [...res.quotes].reverse().find(q => q.sourceUrl === sourceUrl && q.supplierName === f.supplierName.trim());
+        const selected = matchingQuote?.available && matchingQuote.id === res.selectedQuoteId;
+        toast({
+          title: `Confirmed quote recorded for ${res.reference}`,
+          description: selected
+            ? "This lead was already preferred, so its quote is selected for manager approval."
+            : matchingQuote?.available
+              ? "Quote saved without selecting a supplier. Press Prefer lead to select this supplier."
+              : "Unavailable quote retained; choose another lead or continue sourcing.",
+        });
+        onClose();
+      },
       onError: (e) => setErr(apiErr(e)),
     });
   };
@@ -201,7 +217,7 @@ function ConfirmQuoteDialog({ requestId, c, onClose }: { requestId: number; c: S
           {err && <div className="col-span-2 rounded-md bg-rose-50 px-3 py-2 text-xs text-rose-700" data-testid="text-confirm-error">{err}</div>}
           <div className="col-span-2 flex justify-end gap-2 pt-1">
             <Btn type="button" variant="ghost" disabled={m.isPending} onClick={onClose}>Cancel</Btn>
-            <Btn type="submit" disabled={!valid || m.isPending} data-testid="button-submit-confirm">{m.isPending ? "Recording..." : "Record and send for approval"}</Btn>
+            <Btn type="submit" disabled={!valid || m.isPending} data-testid="button-submit-confirm">{m.isPending ? "Recording..." : "Record confirmed quote"}</Btn>
           </div>
         </form>
       </DialogContent>

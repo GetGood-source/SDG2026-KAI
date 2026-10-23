@@ -96,16 +96,27 @@ router.post("/procurement/requests/:id/discovery/quote", async (req, res): Promi
     }
     const sourceUrl = candidate.priceSourceUrl || candidate.sourceUrl;
     const duplicate = r.quotes.find(q => q.supplierId === supplier.id && q.sourceUrl === sourceUrl && q.price === input.price && q.shipping === input.shipping && q.leadHours === input.leadHours && q.available === input.available && q.rating === rating);
-    if (duplicate) return r;
-    r.quotes.push({
+    const quote = duplicate ?? {
       id: crypto.randomUUID(), supplierId: supplier.id, supplierName: supplier.name, price: input.price, shipping: input.shipping,
       leadHours: input.leadHours, available: input.available, sourceUrl, rating, score: 0, total: 0, onTime: false, isDemo: false,
-    });
-    explainRecommendation(r);
-    r.status = r.quotes.some(q => q.available) ? "awaiting_approval" : "sourcing";
-    if (r.discovery) r.discovery.preferredCandidateId = candidate.id;
-    audit(s, "Discovered quotation confirmed",
-      `${r.reference}: ${supplier.name}. Human-recorded unit price ${input.price} ${s.settings.currency}, shipping ${input.shipping}, lead time ${input.leadHours} hours, available ${input.available}, exact fit confirmed. ${candidate.rating !== null ? `Google Maps rating ${rating}/5 (${candidate.reviewCount ?? "unknown"} reviews), observed ${r.discovery!.fetchedAt}.` : `Team-entered reliability rating ${rating}/5; not a Google review rating.`} Source: ${sourceUrl}. Confirmation: ${input.confirmationNote.trim()}. No supplier order or payment sent.`, r.id);
+    };
+    if (!duplicate) r.quotes.push(quote);
+    explainRecommendation(r, false);
+    const leadWasPreferred = r.discovery?.preferredCandidateId === candidate.id;
+    if (leadWasPreferred && quote.available) {
+      r.selectedQuoteId = quote.id;
+      r.recommendationMode = "manual";
+      r.recommendation = `Preferred supplier selected: ${supplier.name}. Its confirmed quote is selected for manager approval. Scored alternatives remain visible for comparison.`;
+    }
+    const selectedQuoteIsAvailable = r.quotes.some(q => q.id === r.selectedQuoteId && q.available);
+    r.status = selectedQuoteIsAvailable ? "awaiting_approval" : "sourcing";
+    if (!duplicate) {
+      const selectionNote = leadWasPreferred && quote.available
+        ? " This supplier was already preferred, so its confirmed quote is selected for manager review."
+        : " Quote recorded only; this supplier was not selected. Press Prefer lead to nominate it.";
+      audit(s, "Discovered quotation confirmed",
+        `${r.reference}: ${supplier.name}. Human-recorded unit price ${input.price} ${s.settings.currency}, shipping ${input.shipping}, lead time ${input.leadHours} hours, available ${input.available}, exact fit confirmed. ${candidate.rating !== null ? `Google Maps rating ${rating}/5 (${candidate.reviewCount ?? "unknown"} reviews), observed ${r.discovery!.fetchedAt}.` : `Team-entered reliability rating ${rating}/5; not a Google review rating.`} Source: ${sourceUrl}. Confirmation: ${input.confirmationNote.trim()}. No supplier order or payment sent.${selectionNote}`, r.id);
+    }
     return r;
   });
   res.status(201).json(ConfirmDiscoveredQuoteResponse.parse(updated));
@@ -156,11 +167,27 @@ router.post("/procurement/requests/:id/action", async (req, res): Promise<void> 
       const candidate = r.discovery?.candidates.find(c => c.id === candidateId);
       if (!candidate || !r.discovery) throw new ProcurementError("Choose an existing discovered supplier lead.", 404);
       r.discovery.preferredCandidateId = candidate.id;
-      audit(s, "Supplier lead preferred", `${r.reference}: ${candidate.name}. Source: ${candidate.sourceUrl}. Preference only; fitment, price, stock and delivery must be confirmed before any approval.`, r.id);
+      const sourceUrl = candidate.priceSourceUrl || candidate.sourceUrl;
+      const matchingQuote = sourceUrl
+        ? [...r.quotes].reverse().find(q => q.available && q.sourceUrl === sourceUrl)
+        : undefined;
+      if (matchingQuote) {
+        rankQuotes(r);
+        r.selectedQuoteId = matchingQuote.id;
+        r.status = "awaiting_approval";
+        r.recommendationMode = "manual";
+        r.recommendation = `Preferred supplier selected: ${candidate.name}. Its confirmed quote is selected for manager approval. Scored alternatives remain visible for comparison.`;
+      } else {
+        r.selectedQuoteId = null;
+        r.status = "sourcing";
+        r.recommendationMode = "manual";
+        r.recommendation = `Preferred lead: ${candidate.name}. No available confirmed quote from this lead is on file, so no supplier is selected for approval yet. Record a confirmed quote to continue.`;
+      }
+      audit(s, "Supplier lead preferred", `${r.reference}: ${candidate.name}. Source: ${candidate.sourceUrl}. ${matchingQuote ? "Matching confirmed quote selected for manager approval." : "No available matching quote; no supplier selected for approval yet."} Fitment, price, stock and delivery must be confirmed before approval.`, r.id);
     } else if (action === "recommend") {
       editable(r);
-      explainRecommendation(r);
-      if (!r.selectedQuoteId) throw new ProcurementError("Record at least one available quotation before requesting an AI explanation.");
+      explainRecommendation(r, false);
+      if (!r.quotes.some(q => q.available)) throw new ProcurementError("Record at least one available quotation before requesting an AI explanation.");
       const response = await openai.chat.completions.create({
         model: "gpt-5.4-mini",
         max_completion_tokens: 8192,
@@ -173,12 +200,16 @@ router.post("/procurement/requests/:id/action", async (req, res): Promise<void> 
       if (!text) throw new ProcurementError("AI returned no explanation. The rules-based recommendation is still available.", 502);
       r.recommendation = text;
       r.recommendationMode = "ai";
-      r.status = "awaiting_approval";
+      r.status = r.quotes.some(q => q.id === r.selectedQuoteId && q.available) ? "awaiting_approval" : "sourcing";
       audit(s, "AI recommendation generated", `${r.reference}: explained ${r.quotes.length} recorded quotes; scoring remains deterministic.`, r.id, "AI assistant");
     } else if (action === "select") {
       editable(r);
       const q = r.quotes.find(q => q.id === quoteId && q.available);
       if (!q) throw new ProcurementError("Select an available quotation.");
+      const matchingLead = r.discovery?.candidates.find(candidate => q.sourceUrl === (candidate.priceSourceUrl || candidate.sourceUrl));
+      if (matchingLead && r.discovery?.preferredCandidateId !== matchingLead.id) {
+        throw new ProcurementError("Press Prefer lead before selecting a quote from a discovered supplier.");
+      }
       r.selectedQuoteId = q.id;
       r.recommendationMode = "manual";
       r.recommendation = `Manual selection: ${q.supplierName}, total ${q.total.toFixed(2)}. ${note || "Chosen by the procurement team."} Original scoring remains visible for comparison.`;
