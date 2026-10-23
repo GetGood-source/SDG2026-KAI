@@ -10,6 +10,8 @@ import { useAccount, apiErrorText } from "@/lib/account";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
+const visibleAuditActions = ["Request created", "Purchase approved"] as const;
+
 function AuditDetail({ detail }: { detail: string }) {
   const sources: string[] = [];
   const text = detail
@@ -73,8 +75,11 @@ export default function Activity() {
   const [q, setQ] = useState("");
   const [action, setAction] = useState("all");
   const [confirmClear, setConfirmClear] = useState(false);
-  const actions = useMemo(() => Array.from(new Set((data?.activity ?? []).map((a) => a.action))), [data]);
-  const rows = useMemo(() => (data?.activity ?? []).filter((a) => (action === "all" || a.action === action) && `${a.action} ${a.detail} ${a.actor}`.toLowerCase().includes(q.toLowerCase())), [data, q, action]);
+  const rows = useMemo(() => (data?.activity ?? []).filter((a) =>
+    visibleAuditActions.includes(a.action as typeof visibleAuditActions[number]) &&
+    (action === "all" || a.action === action) &&
+    `${a.action} ${a.detail} ${a.actor}`.toLowerCase().includes(q.toLowerCase())
+  ), [data, q, action]);
   if (isLoading) return <LoadingRows />;
   if (isError || !data) return <ErrorState onRetry={() => refetch()} />;
   const refOf = (id: number | null) => data.requests.find((r) => r.id === id)?.reference;
@@ -107,7 +112,7 @@ export default function Activity() {
   };
   return (
     <div>
-      <PageHeader eyebrow="Accountability" title="Audit trail" sub="Every action, in order. Actors are the verified accounts that performed each action."
+      <PageHeader eyebrow="Accountability" title="Audit trail" sub="Request creation and purchase approvals, in order."
         actions={<>
           <Btn variant="outline" onClick={exportCsv} disabled={!rows.length} data-testid="button-export-csv"><Download className="h-4 w-4" />Export CSV ({rows.length})</Btn>
           {data.demoMode && isManager && (
@@ -119,7 +124,7 @@ export default function Activity() {
       <div className="mb-3 flex flex-col gap-2 md:flex-row">
         <div className="relative flex-1"><Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" /><input className={cn(inputCls, "pl-8")} placeholder="Search detail, actor, action" value={q} onChange={(e) => setQ(e.target.value)} data-testid="input-search-activity" /></div>
         <select className={cn(inputCls, "md:w-56")} value={action} onChange={(e) => setAction(e.target.value)} data-testid="select-activity-action">
-          <option value="all">All actions</option>{actions.map((a) => <option key={a} value={a}>{a}</option>)}
+          <option value="all">All shown actions</option>{visibleAuditActions.map((a) => <option key={a} value={a}>{a}</option>)}
         </select>
       </div>
       {rows.length === 0 ? <EmptyState icon={<ScrollText className="h-5 w-5" />} title="No entries" text="Nothing matches this search." /> :
