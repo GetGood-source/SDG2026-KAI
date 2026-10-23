@@ -100,7 +100,7 @@ function AuthShell({ children, note }: { children: ReactNode; note: string }) {
       <div className="relative hidden flex-col justify-between overflow-hidden bg-sidebar p-10 text-sidebar-foreground md:flex">
         <div className="flex items-center gap-2.5">
           <img src={`${basePath}/logo.svg`} alt="" className="h-8 w-8" />
-          <span className="text-sm font-bold text-white">Smart Procurement</span>
+          <span className="text-sm font-bold text-white">One Stop Smart Procurement</span>
         </div>
         <div className="rise">
           <h2 className="max-w-sm text-3xl font-extrabold leading-tight text-white">Every urgent part, requested, quoted, approved and received on one record.</h2>

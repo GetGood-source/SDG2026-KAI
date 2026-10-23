@@ -23,7 +23,7 @@ export default function Landing() {
       <header className="mx-auto flex max-w-6xl items-center justify-between px-5 py-5">
         <div className="flex items-center gap-2.5">
           <img src={`${import.meta.env.BASE_URL}logo.svg`} alt="" className="h-8 w-8" />
-          <span className="text-sm font-bold">Smart Procurement</span>
+          <span className="max-w-[100px] text-[10px] font-bold leading-tight sm:max-w-none sm:text-sm">One Stop Smart Procurement</span>
         </div>
         <div className="flex items-center gap-2">
           {demoMode && <span className="hidden rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-bold uppercase text-amber-900 sm:inline">Demo · no sign-in · no real data</span>}
@@ -88,7 +88,7 @@ export default function Landing() {
           </div>
         </div>
       </section>
-      <footer className="mx-auto max-w-6xl px-5 py-6 text-xs text-muted-foreground">Smart Procurement System</footer>
+      <footer className="mx-auto max-w-6xl px-5 py-6 text-xs text-muted-foreground">One Stop Smart Procurement</footer>
     </div>
   );
 }
