@@ -301,6 +301,11 @@ export interface Activity {
   requestId: number | null;
 }
 
+export interface DemoHistoryClearResult {
+  requestsRemoved: number;
+  activityEntriesRemoved: number;
+}
+
 export type SettingsCurrency = typeof SettingsCurrency[keyof typeof SettingsCurrency];
 
 

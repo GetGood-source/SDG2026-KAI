@@ -1,8 +1,13 @@
 import { useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { Download, Search, ScrollText } from "lucide-react";
+import { Download, Search, ScrollText, Trash2 } from "lucide-react";
+import { getGetWorkspaceQueryKey, useClearDemoHistory } from "@workspace/api-client-react";
 import { useWorkspace, fmtDate } from "@/lib/proc";
 import { PageHeader, Panel, LoadingRows, ErrorState, EmptyState, Btn, inputCls } from "@/components/kit";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { useAccount, apiErrorText } from "@/lib/account";
+import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
 function AuditDetail({ detail }: { detail: string }) {
@@ -60,9 +65,14 @@ function AuditDetail({ detail }: { detail: string }) {
 }
 
 export default function Activity() {
+  const { isManager } = useAccount();
   const { data, isLoading, isError, refetch } = useWorkspace();
+  const clearHistory = useClearDemoHistory();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [q, setQ] = useState("");
   const [action, setAction] = useState("all");
+  const [confirmClear, setConfirmClear] = useState(false);
   const actions = useMemo(() => Array.from(new Set((data?.activity ?? []).map((a) => a.action))), [data]);
   const rows = useMemo(() => (data?.activity ?? []).filter((a) => (action === "all" || a.action === action) && `${a.action} ${a.detail} ${a.actor}`.toLowerCase().includes(q.toLowerCase())), [data, q, action]);
   if (isLoading) return <LoadingRows />;
@@ -76,10 +86,36 @@ export default function Activity() {
     el.href = url; el.download = `audit-trail-${new Date().toISOString().slice(0, 10)}.csv`; el.click();
     URL.revokeObjectURL(url);
   };
+  const submitClear = () => {
+    clearHistory.mutate(undefined, {
+      onSuccess: (result) => {
+        queryClient.invalidateQueries({ queryKey: getGetWorkspaceQueryKey() });
+        setConfirmClear(false);
+        setQ("");
+        setAction("all");
+        toast({
+          title: "Demo history cleared",
+          description: `${result.requestsRemoved} requests and ${result.activityEntriesRemoved} audit entries removed. Suppliers, inventory and settings were kept.`,
+        });
+      },
+      onError: (error) => toast({
+        title: "History was not cleared",
+        description: apiErrorText(error),
+        variant: "destructive",
+      }),
+    });
+  };
   return (
     <div>
       <PageHeader eyebrow="Accountability" title="Audit trail" sub="Every action, in order. Actors are the verified accounts that performed each action."
-        actions={<Btn variant="outline" onClick={exportCsv} disabled={!rows.length} data-testid="button-export-csv"><Download className="h-4 w-4" />Export CSV ({rows.length})</Btn>} />
+        actions={<>
+          <Btn variant="outline" onClick={exportCsv} disabled={!rows.length} data-testid="button-export-csv"><Download className="h-4 w-4" />Export CSV ({rows.length})</Btn>
+          {data.demoMode && isManager && (
+            <Btn variant="danger" onClick={() => setConfirmClear(true)} disabled={!data.requests.length && !data.activity.length} data-testid="button-clear-demo-history">
+              <Trash2 className="h-4 w-4" />Clear history
+            </Btn>
+          )}
+        </>} />
       <div className="mb-3 flex flex-col gap-2 md:flex-row">
         <div className="relative flex-1"><Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" /><input className={cn(inputCls, "pl-8")} placeholder="Search detail, actor, action" value={q} onChange={(e) => setQ(e.target.value)} data-testid="input-search-activity" /></div>
         <select className={cn(inputCls, "md:w-56")} value={action} onChange={(e) => setAction(e.target.value)} data-testid="select-activity-action">
@@ -102,6 +138,27 @@ export default function Activity() {
             </tbody>
           </table>
         </Panel>}
+      <AlertDialog open={confirmClear} onOpenChange={(open) => !clearHistory.isPending && setConfirmClear(open)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete all demo request and audit history?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently removes every part request and its quotations, approvals, purchase-order records, plus all audit-trail entries. The clear action itself will not be added to the audit trail. Supplier records, inventory, settings, team access and live-search usage are kept. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={clearHistory.isPending} data-testid="button-cancel-clear-history">Keep history</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={(event) => { event.preventDefault(); submitClear(); }}
+              disabled={clearHistory.isPending}
+              data-testid="button-confirm-clear-history"
+            >
+              {clearHistory.isPending ? "Deleting..." : "Delete history"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

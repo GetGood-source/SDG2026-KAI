@@ -11,6 +11,7 @@ export * from './accountStatus';
 export * from './actionInput';
 export * from './actionInputAction';
 export * from './activity';
+export * from './demoHistoryClearResult';
 export * from './discoveredQuoteInput';
 export * from './healthStatus';
 export * from './inventoryInput';

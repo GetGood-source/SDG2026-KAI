@@ -26,6 +26,7 @@ import type {
 import type {
   Account,
   ActionInput,
+  DemoHistoryClearResult,
   DiscoveredQuoteInput,
   HealthStatus,
   InventoryInput,
@@ -612,6 +613,74 @@ export function useGetWorkspace<TData = Awaited<ReturnType<typeof getWorkspace>>
 
 
 
+
+export const getClearDemoHistoryUrl = () => {
+
+
+
+
+  return `/api/procurement/demo-history`
+}
+
+export const clearDemoHistory = async ( options?: Parameters<typeof customFetch>[1]): Promise<DemoHistoryClearResult> => {
+
+  return customFetch<DemoHistoryClearResult>(getClearDemoHistoryUrl(),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getClearDemoHistoryMutationKey = () => ['clearDemoHistory'] as const;
+
+export const getClearDemoHistoryMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof clearDemoHistory>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof clearDemoHistory>>, TError,void, TContext> => {
+
+const mutationKey = getClearDemoHistoryMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof clearDemoHistory>>, void> = () => {
+
+
+          return  clearDemoHistory(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ClearDemoHistoryMutationResult = NonNullable<Awaited<ReturnType<typeof clearDemoHistory>>>
+
+    export type ClearDemoHistoryMutationError = ErrorType<unknown>
+
+
+    export const useClearDemoHistory = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof clearDemoHistory>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof clearDemoHistory>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getClearDemoHistoryMutationOptions(options), queryClient);
+    }
 
 export const getCreateRequestUrl = () => {
 

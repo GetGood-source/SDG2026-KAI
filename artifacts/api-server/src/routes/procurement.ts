@@ -5,10 +5,11 @@ import {
   AddQuoteParams, AddQuoteBody, AddQuoteResponse, CreateSupplierBody, CreateSupplierResponse,
   SaveInventoryBody, SaveInventoryResponse, SaveSettingsBody, SaveSettingsResponse,
   ConfirmDiscoveredQuoteParams, ConfirmDiscoveredQuoteBody, ConfirmDiscoveredQuoteResponse,
+  ClearDemoHistoryResponse,
   type PartRequest,
 } from "@workspace/api-zod";
 import { openai } from "@workspace/integrations-openai-ai-server";
-import { audit, refreshSummary, withWorkspace, ProcurementError } from "../lib/procurement-store";
+import { audit, clearDemoHistory, refreshSummary, withWorkspace, ProcurementError } from "../lib/procurement-store";
 import { explainRecommendation, rankQuotes } from "../lib/procurement-seed";
 import { identifyAccount, requireMember, requireManager, requireSameOrigin } from "../middlewares/workspace-auth";
 import { dailySearchLimit, sourcePartRequest } from "../lib/procurement-sourcing";
@@ -33,6 +34,15 @@ router.get("/procurement/workspace", async (_req, res): Promise<void> => {
     return s;
   });
   res.json(GetWorkspaceResponse.parse(state));
+});
+
+router.delete("/procurement/demo-history", requireManager, async (_req, res): Promise<void> => {
+  if (process.env.PROCUREMENT_DEMO_MODE !== "true") {
+    res.status(403).json({ error: "History clearing is only available in demo mode." });
+    return;
+  }
+  const result = await withWorkspace(clearDemoHistory);
+  res.json(ClearDemoHistoryResponse.parse(result));
 });
 
 router.post("/procurement/requests", async (req, res): Promise<void> => {

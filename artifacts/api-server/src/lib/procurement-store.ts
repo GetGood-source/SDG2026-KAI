@@ -55,3 +55,11 @@ export function refreshSummary(s: ProcurementState): void {
     savings: purchased.reduce((sum, r) => sum + Math.max(0, Math.max(...r.quotes.filter(q => q.available).map(q => q.total)) - (selected(r)?.total ?? 0)), 0),
   };
 }
+
+export function clearDemoHistory(s: ProcurementState): { requestsRemoved: number; activityEntriesRemoved: number } {
+  const result = { requestsRemoved: s.requests.length, activityEntriesRemoved: s.activity.length };
+  s.requests = [];
+  s.activity = [];
+  refreshSummary(s);
+  return result;
+}

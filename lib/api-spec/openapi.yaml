@@ -72,6 +72,15 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Workspace" }
+  /procurement/demo-history:
+    delete:
+      operationId: clearDemoHistory
+      responses:
+        "200":
+          description: Demo request and activity history cleared; other workspace data preserved
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DemoHistoryClearResult" }
   /procurement/requests:
     post:
       operationId: createRequest
@@ -355,6 +364,12 @@ components:
         actor: { type: string }
         createdAt: { type: string }
         requestId: { type: [integer, "null"] }
+    DemoHistoryClearResult:
+      type: object
+      required: [requestsRemoved, activityEntriesRemoved]
+      properties:
+        requestsRemoved: { type: integer }
+        activityEntriesRemoved: { type: integer }
     Settings:
       type: object
       required: [companyName, industry, currency]

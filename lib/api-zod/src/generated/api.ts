@@ -325,6 +325,12 @@ export const GetWorkspaceResponse = zod.object({
 })
 
 
+export const ClearDemoHistoryResponse = zod.object({
+  "requestsRemoved": zod.number().int(),
+  "activityEntriesRemoved": zod.number().int()
+})
+
+
 
 
 
