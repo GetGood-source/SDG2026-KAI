@@ -676,6 +676,17 @@ export const CreateSupplierResponse = zod.object({
 }))
 
 
+export const DeleteSupplierParams = zod.object({
+  "id": zod.coerce.number().int()
+})
+
+export const DeleteSupplierResponse = zod.object({
+  "id": zod.number().int(),
+  "name": zod.string(),
+  "historicalQuotesRetained": zod.number().int()
+})
+
+
 
 
 export const saveInventoryBodyQuantityMin = 0;

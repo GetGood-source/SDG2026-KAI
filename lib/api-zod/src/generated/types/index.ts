@@ -31,6 +31,7 @@ export * from './supplierCandidateKind';
 export * from './supplierDiscovery';
 export * from './supplierDiscoveryStatus';
 export * from './supplierInput';
+export * from './supplierRemovalResult';
 export * from './teamMember';
 export * from './teamMemberInput';
 export * from './teamMemberInputRole';

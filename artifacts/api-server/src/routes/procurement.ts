@@ -5,7 +5,7 @@ import {
   AddQuoteParams, AddQuoteBody, AddQuoteResponse, CreateSupplierBody, CreateSupplierResponse,
   SaveInventoryBody, SaveInventoryResponse, SaveSettingsBody, SaveSettingsResponse,
   ConfirmDiscoveredQuoteParams, ConfirmDiscoveredQuoteBody, ConfirmDiscoveredQuoteResponse,
-  ClearDemoHistoryResponse,
+  ClearDemoHistoryResponse, DeleteSupplierParams, DeleteSupplierResponse,
   type PartRequest,
 } from "@workspace/api-zod";
 import { openai } from "@workspace/integrations-openai-ai-server";
@@ -235,6 +235,27 @@ router.post("/procurement/suppliers", async (req, res): Promise<void> => {
     return supplier;
   });
   res.status(201).json(CreateSupplierResponse.parse(result));
+});
+
+router.delete("/procurement/suppliers/:id", requireManager, async (req, res): Promise<void> => {
+  if (process.env.PROCUREMENT_DEMO_MODE !== "true") {
+    res.status(403).json({ error: "Supplier deletion is only available in demo mode." });
+    return;
+  }
+  const params = DeleteSupplierParams.safeParse(req.params);
+  if (!params.success) { res.status(400).json({ error: "Invalid supplier ID." }); return; }
+  const result = await withWorkspace(s => {
+    const supplier = s.suppliers.find(item => item.id === params.data.id);
+    if (!supplier) throw new ProcurementError("Supplier not found.", 404);
+    const historicalQuotesRetained = s.requests.reduce(
+      (count, request) => count + request.quotes.filter(quote => quote.supplierId === supplier.id).length,
+      0,
+    );
+    s.suppliers = s.suppliers.filter(item => item.id !== supplier.id);
+    audit(s, "Supplier removed", `${supplier.name} removed from the directory. ${historicalQuotesRetained} historical quote(s) retained with their saved supplier details.`);
+    return { id: supplier.id, name: supplier.name, historicalQuotesRetained };
+  });
+  res.json(DeleteSupplierResponse.parse(result));
 });
 
 router.post("/procurement/inventory", async (req, res): Promise<void> => {

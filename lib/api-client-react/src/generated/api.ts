@@ -37,6 +37,7 @@ import type {
   Settings,
   Supplier,
   SupplierInput,
+  SupplierRemovalResult,
   TeamMember,
   TeamMemberInput,
   Workspace
@@ -1010,6 +1011,74 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
         TContext
       > => {
       return useMutation(getCreateSupplierMutationOptions(options), queryClient);
+    }
+
+export const getDeleteSupplierUrl = (id: number,) => {
+
+
+
+
+  return `/api/procurement/suppliers/${id}`
+}
+
+export const deleteSupplier = async (id: number, options?: Parameters<typeof customFetch>[1]): Promise<SupplierRemovalResult> => {
+
+  return customFetch<SupplierRemovalResult>(getDeleteSupplierUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteSupplierMutationKey = () => ['deleteSupplier'] as const;
+
+export const getDeleteSupplierMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteSupplier>>, TError,DeleteSupplierMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteSupplier>>, TError,DeleteSupplierMutationVariables, TContext> => {
+
+const mutationKey = getDeleteSupplierMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteSupplier>>, DeleteSupplierMutationVariables> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteSupplier(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteSupplierMutationResult = NonNullable<Awaited<ReturnType<typeof deleteSupplier>>>
+
+    export type DeleteSupplierMutationError = ErrorType<unknown>
+    export type DeleteSupplierMutationVariables = {id: number}
+
+    export const useDeleteSupplier = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteSupplier>>, TError,DeleteSupplierMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteSupplier>>,
+        TError,
+        DeleteSupplierMutationVariables,
+        TContext
+      > => {
+      return useMutation(getDeleteSupplierMutationOptions(options), queryClient);
     }
 
 export const getSaveInventoryUrl = () => {

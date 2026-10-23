@@ -141,6 +141,17 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Supplier" }
+  /procurement/suppliers/{id}:
+    delete:
+      operationId: deleteSupplier
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        "200":
+          description: Supplier removed from the directory; historical quotes are retained
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SupplierRemovalResult" }
   /procurement/inventory:
     post:
       operationId: saveInventory
@@ -337,6 +348,13 @@ components:
           properties:
             id: { type: integer }
             isDemo: { type: boolean }
+    SupplierRemovalResult:
+      type: object
+      required: [id, name, historicalQuotesRetained]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        historicalQuotesRetained: { type: integer }
     InventoryInput:
       type: object
       required: [partName, model, quantity, minimum, location]

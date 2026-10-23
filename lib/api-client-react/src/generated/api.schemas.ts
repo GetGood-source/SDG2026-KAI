@@ -274,6 +274,12 @@ export type Supplier = SupplierInput & {
   isDemo: boolean;
 };
 
+export interface SupplierRemovalResult {
+  id: number;
+  name: string;
+  historicalQuotesRetained: number;
+}
+
 export interface InventoryInput {
   /** @minLength 1 */
   partName: string;
