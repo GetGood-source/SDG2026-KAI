@@ -1,1 +1,2 @@
 - [Procurement evidence](procurement-evidence.md) — preserve the distinction between recorded evidence, demo data, AI explanations and external actions.
+- [Project origin](project-origin.md) — firsthand SME workshop experience motivates reducing fragmented rare-part sourcing and recordkeeping.
