@@ -112,55 +112,29 @@ Results shown in the web app
 ```
 
 ## How We Use Replit *(Required)*
-
-Describe how your team used Replit. For example:
-
-- **Development:** Collaborative coding in a shared Repl using Multiplayer.
-- **Hosting:** The app is deployed with Replit Deployments at the Live Demo link above.
-- **Secrets:** API keys are stored in Replit Secrets, never in the code.
+How We Use Replit
+Our team used Replit as the main environment to build and run the Smart Procurement System. The React frontend and Node.js API are managed in the same workspace and tested using Replit’s preview and workflows. We published the prototype with Replit Deployments. API credentials are stored in Replit Secrets rather than in the source code. We have not claimed Multiplayer collaboration, as we can’t confirm it was used.
 
 📄 Proof of use: 
 [Replit Proof of Use (PDF)](Submission/SDC2026_KAI_Replit_POU.pdf)
 
-
-## How We Use RunPod *(Required)*
-
-Describe how your team used RunPod. For example:
-
-- **Workload:** Model inference (e.g. text generation, image processing) runs on a RunPod GPU.
-- **Setup:** `runpod/handler.py` is deployed as a **RunPod Serverless Endpoint**.
-- **Integration:** The Replit app sends requests to the endpoint using `RUNPOD_API_KEY` and `RUNPOD_ENDPOINT_ID`.
-
-Example request:
-
-```bash
-curl -X POST https://api.runpod.ai/v2/$RUNPOD_ENDPOINT_ID/runsync \
-  -H "Authorization: Bearer $RUNPOD_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"input": {"prompt": "Hello"}}'
-```
-
-📄 Proof of use: [`submission/SDC2026_TeamName_Runpod_POU.pdf`](submission/SDC2026_TeamName_Runpod_POU.pdf)
-
----
-
 ## Challenges & Learnings
 
-- What challenges did you face, and how did you overcome them?
-- What did your team learn?
+As someone with limited programming experience, one of my biggest challenges was turning a real procurement problem into a working app and understanding how the interface, API, database, and supplier search fit together. I overcame this by building the project in smaller steps, using Replit and AI tools to learn and debug, and testing the main user flows as I went. I also learned not to treat online supplier listings or AI recommendations as confirmed facts, so the app requires people to verify quotes and managers to approve purchases.
+
+Through the project, I learned how to write clearer prompts, develop and test a full-stack prototype, connect external services, and keep API credentials out of the source code. We also learned that AI can support decisions, but people need to review important purchasing decisions.
 
 ## Future Improvements
 
-- [ ] Improvement 1
-- [ ] Improvement 2
+- [x] Improvement 1 - Improve time management by setting clear milestones and reserving time for testing and fixing issues as it is 3.25am as im writing this.
+- [x] Improvement 2 - Understand more about programming to better utilize and adapt AI generated answers,
 
 ## Team
 
 | Name        | Role                | GitHub                                   |
 | ----------- | ------------------- | ---------------------------------------- |
-| Member Name | Team Lead / Backend | [@username](https://github.com/username) |
-| Member Name | Frontend            | [@username](https://github.com/username) |
-| Member Name | AI / RunPod         | [@username](https://github.com/username) |
+| Woon Kai Xiang | All rounder | [@username](https://github.com/username) |
+
 
 ---
 
