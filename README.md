@@ -120,6 +120,8 @@ Describe how your team used Replit. For example:
 - **Secrets:** API keys are stored in Replit Secrets, never in the code.
 
 📄 Proof of use: 
+## Submission documents
+- [Replit Proof of Use (PDF)](Submission/SDC2026_KAI_Replit_POU.pdf)
 
 ## How We Use RunPod *(Required)*
 
