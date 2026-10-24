@@ -73,16 +73,18 @@ Audit trail: Record key actions.
 ## Project Structure
 
 ```
-
+├── submission/              # Required submission documents
+│   ├── SDC2026_KAI_Replit_POU.pdf       # Replit proof of use
+│   ├── SDC2026_KAI_SlideDecks.pdf       # Slides
+│   ├── SDC2026_KAI_TechDeclaration.pdf  # Technology declaration
+│   ├── SDC2026_KAI_Preliminary.pdf      # Preliminary submission
 ├── artifacts/
 │   ├── smart-procurement/   # Web app
 │   └── api-server/          # Backend API
 ├── lib/                     # Shared code, database, and integrations
-├── scripts/
-├── docs/                    # Screenshots and system diagrams
-├── submission/              # Required hackathon forms and documents
+├── scripts/                 # source code
 ├── .gitignore
-├── .replit
+├── .replit                  # Replit run configuration
 ├── LICENSE
 ├── README.md
 ├── package.json
@@ -92,22 +94,6 @@ Audit trail: Record key actions.
 ├── tsconfig.json
 └── tsconfig.base.json
 
-
-
-
-├── submission/              # Required submission documents
-│   ├── SDC2026_KAI_Replit_POU.pdf       # Replit proof of use
-│   ├── SDC2026_KAI_SlideDecks.pdf       # Slides
-│   ├── SDC2026_KAI_TechDeclaration.pdf  # Technology declaration
-│   ├── SDC2026_KAI_Preliminary.pdf      # Preliminary submission
-├── src/
-│   ├── Smart-Procurement-System.zip            
-├── .env.example             # Example environment variables
-├── .gitignore
-├── .replit                  # Replit run configuration
-├── LICENSE
-├── requirements.txt         # Python dependencies
-└── README.md
 ```
 
 ### Architecture
