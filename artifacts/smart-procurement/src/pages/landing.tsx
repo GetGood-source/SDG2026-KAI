@@ -79,7 +79,7 @@ export default function Landing() {
         <div className="mx-auto grid max-w-6xl gap-8 px-5 py-14 md:grid-cols-2">
           <div>
             <Lock className="h-5 w-5 text-sidebar-primary" />
-            <h2 className="mt-3 text-xl font-bold text-white">Access by invitation of a manager</h2>
+            <h2 className="mt-3 text-xl font-bold text-white">{demoMode ? "Try the demo—no account needed" : "Access by invitation of a manager"}</h2>
             <p className="mt-2 text-sm leading-relaxed">{demoMode ? "Choose Employee or Manager at the top to enter immediately. This is an open demo: the role switch is simulated and is not a security boundary." : "Signing up does not open the workspace on its own. A manager authorizes your email first, then you verify it. Staff source and order; managers also approve purchases and manage the team."}</p>
           </div>
           <div className="text-sm leading-relaxed">

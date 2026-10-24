@@ -7,10 +7,10 @@ An SME procurement MVP for requesting spare parts, comparing supplier quotations
 - Starts with a Malaysian car repair shop, but part/model fields and configurable industry support other SME sectors.
 - User requested a white-and-blue design.
 - Public homepage must present separate Employee Login and Manager Login actions in the top navigation. Keep the role choice simple and prominent.
-- In the development preview, those choices enter immediately as simulated employee or manager roles. This demo bypass is development-only; never enable `PROCUREMENT_DEMO_MODE` or `VITE_PROCUREMENT_DEMO_MODE` in production.
+- The user wants to publish an open demo: Employee and Manager enter immediately without email or sign-in in both preview and production. Enable `PROCUREMENT_DEMO_MODE` and `VITE_PROCUREMENT_DEMO_MODE` in both environments. These are simulated roles, not secure accounts; keep visible demo warnings and use no sensitive data. Anyone can choose Manager.
 - Five stages: request, connected stock/supplier data, explained decision, human approval, visible purchase/delivery outcome.
 - Includes inventory management, supplier directory, searchable audit trail and CSV export.
-- One company workspace, protected by verified Clerk accounts and manager-controlled membership. Unknown signups cannot access procurement data.
+- One shared company workspace. In account-enabled mode, verified Clerk accounts and manager-controlled membership protect access. In the requested published demo, visitors share demo data and can switch roles without authentication.
 - Staff can create requests, source/record/select quotations, add suppliers, update stock, record approved orders and receive deliveries. Managers additionally approve/reject purchases, edit company settings and manage team access.
 - Team access is preauthorized by email. No invitation email is sent; managers share the app link separately.
 - Sample suppliers, ratings and quotations are marked Demo. New suppliers and quotes can be recorded manually.
