@@ -133,7 +133,7 @@ Through the project, I learned how to write clearer prompts, develop and test a 
 
 | Name        | Role                | GitHub                                   |
 | ----------- | ------------------- | ---------------------------------------- |
-| Woon Kai Xiang | All rounder | [@username](https://github.com/username) |
+| Woon Kai Xiang | All rounder | [GetGood-source](https://github.com/GetGood-source) |
 
 
 ---
