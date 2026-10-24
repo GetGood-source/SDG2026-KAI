@@ -99,51 +99,17 @@ Audit trail: Record key actions.
 ### Architecture
 
 ```
-User ──► Replit (App / API) ──► RunPod Endpoint (GPU model)
-                │
-                └──► Response returned to user
+User
+  ↓
+Replit web app
+  ↓
+Replit API server
+  ├── PostgreSQL — requests, inventory, suppliers, approvals
+  ├── SerpApi — Google Search/Maps supplier leads
+  └── Replit AI Integration — AI explanation of quote comparisons
+  ↓
+Results shown in the web app
 ```
-
----
-
-## How to Run
-
-### Option 1 — Run on Replit (Recommended)
-
-1. Open the [Replit Project](https://replit.com/@your-username/your-project), or import this repository via **Create Repl → Import from GitHub**.
-2. Open the **Secrets** tab (🔒) and add the variables listed in `.env.example`:
-   - `RUNPOD_API_KEY`
-   - `RUNPOD_ENDPOINT_ID`
-3. Click **Run**. Replit uses the `.replit` file to start `python src/main.py`.
-
-### Option 2 — Run Locally
-
-```bash
-# 1. Clone the repository
-git clone https://github.com/your-username/your-project.git
-cd your-project
-
-# 2. Create and activate a virtual environment
-python -m venv venv
-source venv/bin/activate        # Windows: venv\Scripts\activate
-
-# 3. Install dependencies
-pip install -r requirements.txt
-
-# 4. Configure environment variables
-cp .env.example .env            # then fill in your values
-
-# 5. Run the app
-python src/main.py
-```
-
-### Run Tests
-
-```bash
-python -m unittest discover tests
-```
-
----
 
 ## How We Use Replit *(Required)*
 
@@ -153,7 +119,7 @@ Describe how your team used Replit. For example:
 - **Hosting:** The app is deployed with Replit Deployments at the Live Demo link above.
 - **Secrets:** API keys are stored in Replit Secrets, never in the code.
 
-📄 Proof of use: [`submission/SDC2026_TeamName_Replit_POU.pdf`](submission/SDC2026_TeamName_Replit_POU.pdf)
+📄 Proof of use: 
 
 ## How We Use RunPod *(Required)*
 
