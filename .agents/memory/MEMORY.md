@@ -1,2 +1,3 @@
 - [Procurement evidence](procurement-evidence.md) — preserve the distinction between recorded evidence, demo data, AI explanations and external actions.
 - [Project origin](project-origin.md) — firsthand SME workshop experience motivates reducing fragmented rare-part sourcing and recordkeeping.
+- [SDC sponsorship](sdc-sponsorship.md) — user confirms Replit is the SDC sponsor; no specific sponsored credit allocation is confirmed.
