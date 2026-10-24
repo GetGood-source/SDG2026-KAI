@@ -74,6 +74,27 @@ Audit trail: Record key actions.
 
 ```
 
+├── artifacts/
+│   ├── smart-procurement/   # Web app
+│   └── api-server/          # Backend API
+├── lib/                     # Shared code, database, and integrations
+├── scripts/
+├── docs/                    # Screenshots and system diagrams
+├── submission/              # Required hackathon forms and documents
+├── .gitignore
+├── .replit
+├── LICENSE
+├── README.md
+├── package.json
+├── pnpm-lock.yaml
+├── pnpm-workspace.yaml
+├── replit.md
+├── tsconfig.json
+└── tsconfig.base.json
+
+
+
+
 ├── submission/              # Required submission documents
 │   ├── SDC2026_KAI_Replit_POU.pdf       # Replit proof of use
 │   ├── SDC2026_KAI_SlideDecks.pdf       # Slides
